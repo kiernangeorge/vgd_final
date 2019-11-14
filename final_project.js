@@ -18,11 +18,11 @@ The characters on the left will be the 4 party members the player has available 
 Future plans include key mapping so the user isn't restricted to just wasd for movement and enter for selection. These will be incorporated into the option screen. I will use the difficulty settings in my fuzzy logic for combat to calculate damage, probability of using certain abilities, and critical hit rate.
 */
 angleMode = "radians";
-var startScreen = 1;
+var startScreen = 0;
 var optionsScreen = 0;
 var instructionsScreen = 0;
 var startMenuSelect = 0;
-var gameScreen = 0;
+var nameScreen = 1;
 var sound = 1;
 var difficulty = 1;
 var keyMap = [];
@@ -34,15 +34,93 @@ keyMap[4] = 10; //select
 keyMap[5] = 105; //inventory
 var keyArray = [];
 var a=random(1500);
+var sunX = 300;
 var keyPressDelay = 0;
 var enterKey = "enter";
+var rename = -1;
+var characters = [];
 sword = loadImage("sprites/weapon_katana.png");
+monk = loadImage("sprites/characters/monk.png");
+mage = loadImage("sprites/characters/mage.png");
+knight = loadImage("sprites/characters/knight.png");
+rogue = loadImage("sprites/characters/rogue.png");
 
-var sunX = 300;
+var character = function()
+{
+	this.name = "Click to name";
+	this.health = -1;
+	this.mana = -1;
+}
+
+characters.push(new character()); //knight
+characters.push(new character()); //mage
+characters.push(new character()); //rogue
+characters.push(new character()); //monk
+
+var remapKey = function()
+{
+	for(var index = 0; index < keyMap.length; index++)
+	{
+		if(keyMap[index] === -1)
+		{
+			return 1;
+		}
+	}
+	return 0;
+};
+
+var setKey = function(x)
+{
+	for(var index = 0; index < keyMap.length; index++)
+	{
+		if(keyMap[index] === -1)
+		{
+			keyMap[index] = x;
+		}
+	}
+};
+
+var setName = function(x)
+{
+	characters[rename].name += String.fromCharCode(x);
+}
+
+var checkForKeyConflicts = function(x)
+{
+	for(var index = 0; index < keyMap.length; index++)
+	{
+		if(keyMap[index] === x)
+		{
+			return 1;
+		}
+	}
+	return 0;
+};
 
 var keyPressed = function() 
 {
-    keyArray[key.code] = 1;
+	if(remapKey() === 1)
+	{
+		if(checkForKeyConflicts(key.code) === 0)
+		{
+			setKey(key.code);
+		}
+	}
+	else if(rename !== -1)
+	{
+		if(key.code === 10)
+		{
+			rename = -1;
+		}
+		else
+		{
+			setName(key.code);
+		}
+	}
+	else
+	{
+		keyArray[key.code] = 1;
+	}
 };
 
 var keyReleased = function() 
@@ -352,7 +430,7 @@ var updateSelect = function()
 				{
 					startMenuSelect--;
 				}
-				keyPressDelay += 5;
+				keyPressDelay += 10;
 			}
         }
         else if(keyArray[keyMap[1]] === 1)
@@ -363,7 +441,7 @@ var updateSelect = function()
 				{
 					startMenuSelect++;
 				}
-				keyPressDelay += 5;
+				keyPressDelay += 10;
 			}
         }
         else if(keyArray[keyMap[4]] === 1)
@@ -371,7 +449,7 @@ var updateSelect = function()
             if(startMenuSelect === 0)
             {
                 startScreen = 0;
-                gameScreen = 1;
+                nameScreen = 1;
             }
             else if(startMenuSelect === 1)
             {
@@ -389,7 +467,9 @@ var updateSelect = function()
 
 var mouseClicked = function() 
 {
-    if(optionsScreen === 1)
+	if(optionsScreen === 1)
+	{
+    if(remapKey() === 0)
     {
         if(mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50)
         {
@@ -427,11 +507,77 @@ var mouseClicked = function()
 			keyMap[4] = 10;
 			keyMap[5] = 105;
         }
-    }
+		else if(mouseX > 120 && mouseX < 180 && mouseY > 220 && mouseY < 260)
+		{
+			keyMap[0] = -1;
+		}
+		else if(mouseX > 120 && mouseX < 180 && mouseY > 265 && mouseY < 305)
+		{
+			keyMap[1] = -1;
+		}
+		else if(mouseX > 120 && mouseX < 180 && mouseY > 310 && mouseY < 350)
+		{
+			keyMap[2] = -1;
+		}
+		else if(mouseX > 120 && mouseX < 180 && mouseY > 355 && mouseY < 395)
+		{
+			keyMap[3] = -1;
+		}
+		else if(mouseX > 320 && mouseX < 380 && mouseY > 220 && mouseY < 260)
+		{
+			keyMap[5] = -1;
+		}
+		else if(mouseX > 320 && mouseX < 380 && mouseY > 265 && mouseY < 305)
+		{
+			keyMap[4] = -1;
+		}
+	}
+	}
+	else if(instructionsScreen === 1)
+	{
+		if(mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50)
+        {
+            instructionsScreen = 0;
+            startScreen = 1;
+        }
+	}
+	else if(nameScreen === 1)
+	{
+		if(rename === -1)
+		{
+		/*
+		rect(160, 90, 200, 50, 30); //knight name
+		rect(160, 160, 200, 50, 30); //mage
+		rect(160, 230, 200, 50, 30); //rogue
+		rect(160, 300, 200, 50, 30); //monk
+		*/
+			if(mouseX > 160 && mouseX < 360 && mouseY > 90 && mouseY < 140)
+			{
+				characters[0].name = "";
+				rename = 0;
+			}
+			else if(mouseX > 160 && mouseX < 360 && mouseY > 160 && mouseY < 210)
+			{
+				characters[1].name = "";
+				rename = 1;
+			}
+			else if(mouseX > 160 && mouseX < 360 && mouseY > 230 && mouseY < 280)
+			{
+				characters[2].name = "";
+				rename = 2;
+			}
+			else if(mouseX > 160 && mouseX < 360 && mouseY > 300 && mouseY < 350)
+			{
+				characters[3].name = "";
+				rename = 3;
+			}
+		}
+	}
 };
 
 var drawScreen = function()
 {
+	textAlign(CENTER, CENTER);
     if(startScreen === 1)
     {
         background(255, 255, 255);
@@ -496,7 +642,10 @@ var drawScreen = function()
         else
         {
             fill(108, 108, 108);
-            rect(140, 240, 80, 50, 30);
+            rect(300, 160, 80, 50, 30);
+			fill(255, 255, 255);
+            rect(120, 160, 80, 50, 30);
+            rect(210, 160, 80, 50, 30);
         }
         fill(0, 0, 0);
         textSize(20);
@@ -505,13 +654,13 @@ var drawScreen = function()
         text("Hard", 340, 185);
 		
 		fill(108, 108, 108);
-        rect(120, 220, 60, 40, 30);
-		rect(120, 265, 60, 40, 30);
-		rect(120, 310, 60, 40, 30);
-		rect(120, 355, 60, 40, 30);
-		rect(320, 220, 60, 40, 30);
-		rect(320, 265, 60, 40, 30);
-		rect(230, 310, 150, 50, 30);
+        rect(120, 220, 60, 40, 30); //up
+		rect(120, 265, 60, 40, 30); //down
+		rect(120, 310, 60, 40, 30); //left
+		rect(120, 355, 60, 40, 30); //right
+		rect(320, 220, 60, 40, 30); //inventory
+		rect(320, 265, 60, 40, 30); //select
+		rect(230, 310, 150, 50, 30); //restore defaults
 		fill(0, 0, 0);
 		textSize(30);
 		text("Up", 60, 240);
@@ -532,19 +681,71 @@ var drawScreen = function()
 		}
 		else
 		{
-			text(String.fromCharCode(keyMap[4]), 330, 285);
+			text(String.fromCharCode(keyMap[4]), 350, 285);
 		}
+		textSize(20);
 		text("Restore Default", 305, 335);
     }
 	else if(instructionsScreen === 1)
 	{
-		background(255, 0, 0);
+		background(0, 0, 0);
+		textFont(createFont("fantasy"), 30);
+		fill(255, 255, 255);
+        text("Instructions", 200, 20);
+		stroke(255, 255, 255);
+		line(100, 40, 300, 40);
+		noStroke();
+		textSize(18);
+		textAlign(LEFT, LEFT);
+		text("Welcome to Clash of Prosecution, a turn-based", 10, 80);
+		text("RPG inspired by Final Fantasy 1. You will control", 10, 110);
+		text("a character while roaming in the semi-open world.", 10, 140);
+		text("While outside of the starting town, there is a", 10, 170);
+		text("random encounter system that will trigger combat.", 10, 200);
+		text("In combat you will control 4 characters, a mage, a", 10, 230);
+		text("knight, a monk, and a rogue. Default keys are WASD", 10, 260);
+		text("for movement, Enter for select, and I for inventory.", 10, 290);
+		text("You can change the key mappings and other settings in", 10, 320);
+		text("the options screen. Have fun!", 10, 350);
+		fill(108, 108, 108);
+        rect(0, 0, 100, 50, 30);
+        fill(0, 0, 0);
+		textSize(30);
+		textAlign(CENTER, CENTER);
+        text("Back", 50, 25);
 	}
-    else if(gameScreen === 1)
+    else if(nameScreen === 1)
     {
 		background(0, 0, 0);
-		
-		image(sword, 200, 200);
+		image(knight, 80, 70, 60, 60);
+		image(mage, 80, 140, 60, 60);
+		image(rogue, 80, 210, 60, 60);
+		image(monk, 85, 300, 50, 50);
+		textFont(createFont("fantasy"), 30);
+		fill(255, 255, 255);
+        text("Characters", 200, 40);
+		stroke(255, 255, 255);
+		line(100, 60, 300, 60);
+		noStroke();
+		textSize(20);
+		text("Knight", 30, 110);
+		text("Mage", 30, 180);
+		text("Rogue", 30, 255);
+		text("Monk", 30, 330);
+		stroke(0, 0, 0);
+		fill(108, 108, 108);
+		rect(160, 90, 200, 50, 30); //knight name
+		rect(160, 160, 200, 50, 30); //mage
+		rect(160, 230, 200, 50, 30); //rogue
+		rect(160, 300, 200, 50, 30); //monk
+		noStroke();
+		fill(0, 0, 0);
+		textAlign(CENTER, CENTER);
+		textSize(20);
+		text(characters[0].name, 260, 115);
+		text(characters[1].name, 260, 185);
+		text(characters[2].name, 260, 255);
+		text(characters[3].name, 260, 325);
     }
 };
 
