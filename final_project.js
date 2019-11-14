@@ -20,13 +20,23 @@ Future plans include key mapping so the user isn't restricted to just wasd for m
 angleMode = "radians";
 var startScreen = 1;
 var optionsScreen = 0;
-var startSelect = 1;
-var optionSelect = 0;
+var instructionsScreen = 0;
+var startMenuSelect = 0;
 var gameScreen = 0;
 var sound = 1;
 var difficulty = 1;
+var keyMap = [];
+keyMap[0] = 119; //up
+keyMap[1] = 115; //down
+keyMap[2] = 97; //left
+keyMap[3] = 100; //right
+keyMap[4] = 10; //select
+keyMap[5] = 105; //inventory
 var keyArray = [];
 var a=random(1500);
+var keyPressDelay = 0;
+var enterKey = "enter";
+sword = loadImage("sprites/weapon_katana.png");
 
 var sunX = 300;
 
@@ -314,14 +324,19 @@ var drawMenu = function()
     fill(0, 0, 0);
     textFont(createFont("fantasy"), 15);
     text("START", 200, 210);
-    text("OPTIONS", 200, 230);
-    if(startSelect === 1)
+    text("OPTIONS", 200, 250);
+	text("INSTRUCTIONS", 200, 230);
+    if(startMenuSelect === 0)
     {
         triangle(175, 205, 180, 210, 175, 215);
     }
-    else
+    else if(startMenuSelect === 1)
     {
-        triangle(165, 225, 170, 230, 165, 235);
+        triangle(145, 225, 150, 230, 145, 235);
+    }
+	else if(startMenuSelect === 2)
+    {
+        triangle(165, 245, 170, 250, 165, 255);
     }
 };
 
@@ -329,24 +344,41 @@ var updateSelect = function()
 {
     if(startScreen === 1)
     {
-        if(keyArray[119] === 1)
+        if(keyArray[keyMap[0]] === 1)
         {
-            startSelect = 1;
-            optionSelect = 0;
+            if(keyPressDelay === 0)
+			{
+				if(startMenuSelect>0)
+				{
+					startMenuSelect--;
+				}
+				keyPressDelay += 5;
+			}
         }
-        else if(keyArray[115] === 1)
+        else if(keyArray[keyMap[1]] === 1)
         {
-            startSelect = 0;
-            optionSelect = 1;
+			if(keyPressDelay === 0)
+			{
+				if(startMenuSelect<2)
+				{
+					startMenuSelect++;
+				}
+				keyPressDelay += 5;
+			}
         }
-        else if(keyArray[10] === 1)
+        else if(keyArray[keyMap[4]] === 1)
         {
-            if(startSelect === 1)
+            if(startMenuSelect === 0)
             {
                 startScreen = 0;
                 gameScreen = 1;
             }
-            else if(optionSelect === 1)
+            else if(startMenuSelect === 1)
+            {
+                startScreen = 0;
+                instructionsScreen = 1;
+            }
+			else if(startMenuSelect === 2)
             {
                 startScreen = 0;
                 optionsScreen = 1;
@@ -383,6 +415,17 @@ var mouseClicked = function()
         else if(mouseX > 300 && mouseX < 380 && mouseY > 160 && mouseY < 210)
         {
             difficulty = 3;
+        }
+		else if(mouseX > 230 && mouseX < 380 && mouseY > 310 && mouseY < 360)
+        {
+			sound = 1;
+			difficulty = 1;
+			keyMap[0] = 119;
+			keyMap[1] = 115;
+			keyMap[2] = 97;
+			keyMap[3] = 100;
+			keyMap[4] = 10;
+			keyMap[5] = 105;
         }
     }
 };
@@ -453,28 +496,64 @@ var drawScreen = function()
         else
         {
             fill(108, 108, 108);
-            rect(300, 160, 80, 50, 30);
-            fill(255, 255, 255);
-            rect(210, 160, 80, 50, 30);
-            rect(120, 160, 80, 50, 30);
+            rect(140, 240, 80, 50, 30);
         }
         fill(0, 0, 0);
         textSize(20);
         text("Easy", 160, 185);
         text("Normal", 250, 185);
         text("Hard", 340, 185);
+		
+		fill(108, 108, 108);
+        rect(120, 220, 60, 40, 30);
+		rect(120, 265, 60, 40, 30);
+		rect(120, 310, 60, 40, 30);
+		rect(120, 355, 60, 40, 30);
+		rect(320, 220, 60, 40, 30);
+		rect(320, 265, 60, 40, 30);
+		rect(230, 310, 150, 50, 30);
+		fill(0, 0, 0);
+		textSize(30);
+		text("Up", 60, 240);
+		text("Down", 60, 285);
+		text("Left", 60, 330);
+		text("Right", 60, 375);
+		text("Inventory", 250, 240);
+		text("Select", 250, 285);
+		text(String.fromCharCode(keyMap[0]), 150, 240);
+		text(String.fromCharCode(keyMap[1]), 150, 285);
+		text(String.fromCharCode(keyMap[2]), 150, 330);
+		text(String.fromCharCode(keyMap[3]), 150, 375);
+		text(String.fromCharCode(keyMap[5]), 350, 240);
+		if(keyMap[4] === 10)
+		{
+			textSize(20);
+			text(enterKey, 350, 285);
+		}
+		else
+		{
+			text(String.fromCharCode(keyMap[4]), 330, 285);
+		}
+		text("Restore Default", 305, 335);
     }
+	else if(instructionsScreen === 1)
+	{
+		background(255, 0, 0);
+	}
     else if(gameScreen === 1)
     {
-        background(255, 255, 255);
-        fill(0, 0, 0);
-        textFont(createFont("fantasy"), 30);
-        text("TO BE ADDED LATER", 200, 200);
+		background(0, 0, 0);
+		
+		image(sword, 200, 200);
     }
 };
 
 draw = function() {
     drawScreen();
+	if(keyPressDelay > 0)
+	{
+		keyPressDelay--;
+	}
 };
 
 
