@@ -3,20 +3,18 @@ var sketchProc = function (processingInstance) {
         size(400, 400);
         frameRate(60);
 
-        //ProgramCodeGoesHere
+        //Document for Final Project Milestone 2
         /*
-        The majority of these screens were written using multiple fsm's, particles, and bezier curves. The following sections detail how these concepts contributed to the overall game.
-
-        FSM: There is one large fsm that will control the game screen shown to the player. As of right now, there is a start screen, an options screen, and a in-game screen with placeholder text until further work is done. The player uses W and S to navigate between the menu options. When they are at an option they want, they use the Enter key to select. When clicking enter on start, it modifies the global variables to indicate a change to the blank screen with placeholder text. When pressing enter on options it redirects them to the option screen. In the option screen, the player uses the mouse to pick their options like sound and difficulty. Based on the currently selected option in each row, the rectangle's will be colored differently. There is a back button to return to the start screen.
-
-        Particles: I used the noise-map method demonstrated in class to make a moving sky and implement a mountain range in the distance. There is not much else to it, except for the time of day based on the sun's x position. When the sun moves off the screen and back on, I modify a return value to the coloration of the sky to make it more blue for day and more gray for night.
-
-        Bezier: This was used to make the hill range in the forefront of the view and part of the weapons on the characters. I used the draggable bezier tool offered on Khan Academy to build the curves.
-
-        The characters on the left will be the 4 party members the player has available during combat. From left to right: they are the Mage, the Rogue, the Monk, and the Warrior. On the right side are two goblins that will be one of the most basic adversary units.
-
-        Future plans include key mapping so the user isn't restricted to just wasd for movement and enter for selection. These will be incorporated into the option screen. I will use the difficulty settings in my fuzzy logic for combat to calculate damage, probability of using certain abilities, and critical hit rate.
-         */
+		I made substantial changes to the project for this milestone.
+		FSM: the basic idea is the same. There is a title screen, instructions, options, inventory screen, naming screen, and 2 environment screens. These are navigated with key presses and mouse clicks.
+        Key Mapping: this was pretty easy to implement. I have an array containing positions specified to hold interactive keys, like movement, inventory, and select. The user can change these in the options screen.
+		Options: The sound can be turned on/off which is represented by a global control variable. The difficulty is a global that will be used in combat for hit chance calculation and so forth, not implemented yet. The key mappings are the only other option.
+		Title Animation: A particle system was implemented with the map and noise function to create a realistic sky system, day-night cycle, mountains, and hills. The characters are sprites from a free rpg sprite sharing site, references above. The sounds are from the same.
+		Naming characters: The player is able to name characters in the first screen after starting the game. They can only enter alphanumeric characters. There are default names if they choose not to name them. These are implemented in an object oriented perspective.
+		Worlds: The player can navigate through 2 screens, a town, and a wild area. These tiles use the tilemap system shown in class. The letters represent a tile which is imported pixel art. The player moves with their mapped keys and collision detection is implemented.
+		Inventory: The inventory currently displays the 4 characters, their health and mana, their weapons and armor, and the amount of gold the player has accumulated.
+		Future Work: The only thing left will be to add a battle system when encountering an enemy in the wild zones. This should be simple as it's just a large fsm with minor calculations for damage/dodge chance. I will also implement some npc's with basic dialogue and a shop system. The player will also be able to keep and sell items so another inventory screen will be added to view and change equipped items.
+		*/
         angleMode = "radians";
         //globals to handle screen display
         var startScreen = 1;
