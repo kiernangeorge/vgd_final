@@ -18,11 +18,18 @@ The characters on the left will be the 4 party members the player has available 
 Future plans include key mapping so the user isn't restricted to just wasd for movement and enter for selection. These will be incorporated into the option screen. I will use the difficulty settings in my fuzzy logic for combat to calculate damage, probability of using certain abilities, and critical hit rate.
 */
 angleMode = "radians";
+//globals to handle screen display
 var startScreen = 0;
 var optionsScreen = 0;
 var instructionsScreen = 0;
 var startMenuSelect = 0;
-var nameScreen = 1;
+var nameScreen = 0;
+var townScreen = 0;
+var wild1Screen = 0;
+var battleScreen = 0;
+var inventoryScreen = 1;
+
+//globals to handle settings
 var sound = 1;
 var difficulty = 1;
 var keyMap = [];
@@ -33,29 +40,243 @@ keyMap[3] = 100; //right
 keyMap[4] = 10; //select
 keyMap[5] = 105; //inventory
 var keyArray = [];
+
+//globals for start screen animation
 var a=random(1500);
 var sunX = 300;
-var keyPressDelay = 0;
+
+//globals for naming characters
 var enterKey = "enter";
 var rename = -1;
+
+//array to hold the four characters
 var characters = [];
-sword = loadImage("sprites/weapon_katana.png");
+
+//player, used when moving out of battle
+var cam;
+
+//character sprites
 monk = loadImage("sprites/characters/monk.png");
 mage = loadImage("sprites/characters/mage.png");
 knight = loadImage("sprites/characters/knight.png");
 rogue = loadImage("sprites/characters/rogue.png");
 
-var character = function()
+//tile sprites
+short_grass = loadImage("sprites/tiles/short_grass.png");
+door = loadImage("sprites/tiles/door.png");
+tall_grass = loadImage("sprites/tiles/tall_grass.png");
+water = loadImage("sprites/tiles/water.png");
+wall = loadImage("sprites/tiles/wall.png");
+flowers = loadImage("sprites/tiles/flowers.png");
+house_wall = loadImage("sprites/tiles/house_wall.png");
+house_floor = loadImage("sprites/tiles/house_floor.png");
+path = loadImage("sprites/tiles/path.png");
+fence_side = loadImage("sprites/tiles/fence_side.png");
+fence_top = loadImage("sprites/tiles/fence_top.png");
+weapon_shop = loadImage("sprites/tiles/weapon_shop.png");
+item_shop = loadImage("sprites/tiles/item_shop.png");
+
+
+//town tilemap array
+var town = [];
+
+//first wild tilemap array
+var wild1 = [];
+
+var floor = function(x, y, type)
+{
+	this.x = x;
+	this.y = y;
+	this.type = type;
+};
+
+floor.prototype.draw = function()
+{
+	if(this.type === "wall")
+	{
+		image(wall, this.x, this.y, 20, 20);
+	}
+	else if(this.type === "short_grass")
+	{
+		image(short_grass, this.x, this.y, 20, 20);
+	}
+	else if(this.type === "water")
+	{
+		image(water, this.x, this.y, 20, 20);
+	}
+	else if(this.type === "house_wall")
+	{
+		image(house_wall, this.x, this.y, 20, 30);
+	}
+	else if(this.type === "house_floor")
+	{
+		image(house_floor, this.x, this.y, 20, 20);
+	}
+	else if(this.type === "path")
+	{
+		image(path, this.x, this.y, 20, 25);
+	}
+	else if(this.type === "flowers")
+	{
+		image(flowers, this.x, this.y, 20, 27);
+	}
+	else if(this.type === "fence_side")
+	{
+		image(short_grass, this.x, this.y, 20, 20);
+		image(fence_side, this.x, this.y, 24, 27);
+	}
+	else if(this.type === "fence_top")
+	{
+		image(short_grass, this.x, this.y, 20, 20);
+		image(fence_top, this.x, this.y, 20, 27);
+	}
+	else if(this.type === "weapon_shop")
+	{
+		image(house_wall, this.x, this.y, 20, 20);
+		image(weapon_shop, this.x, this.y, 20, 27);
+	}
+	else if(this.type === "item_shop")
+	{
+		image(house_wall, this.x, this.y, 20, 20);
+		image(item_shop, this.x, this.y, 20, 22);
+	}
+};
+
+//w = wall, s = short grass, t = tall grass, f = flower, d = door, b = water, h = house wall
+//y = house floor, p = path, z = fence side, x = fence top
+var townTilemap = [
+"wwwwwwwwwwwwwwwwwwww",
+"wssssssssssssssssssw",
+"wssssssssssxzzzzzzxw",
+"wssshhhhhhhxssssffxw",
+"wssshyyyyyhxsfssssxw",
+"wssshyyyyyhxzzzszzxw",
+"wssshhhyhchssssssssw",
+"wsssssspsssssssssssw",
+"wsssssspppsssssssssw",
+"wsssssssspsssssssssw",
+"wsssssssspsssssssssw",
+"wsssssssspsswwwwwssw",
+"wsssssssspsswbbbwssw",
+"whhhhhssspsswbbbwssw",
+"whyyyhssspsswwwwwssw",
+"whyyyhssspsssspfsssw",
+"whyyyppppppppppssssw",
+"whhahhfsspfssssssssw",
+"wsssssssspsssssssssw",
+"wwwwwwwwwpwwwwwwwwww"];
+
+var wild1Tilemap = [
+"wwwwwwwwwpwwwwwwwwww",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss",
+"ssssssssssssssssssss"];
+
+var initTilemap = function(tilemap, tiles)
+{
+	for(var row = 0; row < tilemap.length; row++)
+    {
+        for(var col = 0; col < tilemap[row].length; col++)
+        {
+            switch(tilemap[row][col])
+            {
+				case 'w':
+					tiles.push(new floor(col*20, row*20, "wall"));
+					break;
+				case 's':
+					tiles.push(new floor(col*20, row*20, "short_grass"));
+					break;
+				case 'b':
+					tiles.push(new floor(col*20, row*20, "water"));
+					break;
+				case 'h':
+					tiles.push(new floor(col*20, row*20, "house_wall"));
+					break;
+				case 'y':
+					tiles.push(new floor(col*20, row*20, "house_floor"));
+					break;
+				case 'p':
+					tiles.push(new floor(col*20, row*20, "path"));
+					break;
+				case 'f':
+					tiles.push(new floor(col*20, row*20, "flowers"));
+					break;
+				case 'z':
+					tiles.push(new floor(col*20, row*20, "fence_side"));
+					break;
+				case 'x':
+					tiles.push(new floor(col*20, row*20, "fence_top"));
+					break;
+				case 'a':
+					tiles.push(new floor(col*20, row*20, "weapon_shop"));
+					break;
+				case 'c':
+					tiles.push(new floor(col*20, row*20, "item_shop"));
+					break;
+				default:
+					break;
+			}
+		}
+	}
+};
+
+var checkCollisions = function(row, col, tilemap)
+{
+	if(tilemap[col][row] === 'w' || tilemap[col][row] === 'b' || tilemap[col][row] === 'h' || tilemap[col][row] === 'z' || tilemap[col][row] === 'x')
+	{
+		return 1;
+	}
+	return 0;
+};
+
+var drawTilemap = function(tiles)
+{
+	for(var index = 0; index < tiles.length; index++)
+	{
+		tiles[index].draw();
+	}
+};
+
+var character = function(health, mana)
 {
 	this.name = "Click to name";
-	this.health = -1;
-	this.mana = -1;
+	this.health = health;
+	this.mana = mana;
 }
 
-characters.push(new character()); //knight
-characters.push(new character()); //mage
-characters.push(new character()); //rogue
-characters.push(new character()); //monk
+characters.push(new character(100, -1)); //knight
+characters.push(new character(100, 50)); //mage
+characters.push(new character(100, -1)); //rogue
+characters.push(new character(100, 30)); //monk
+
+var camera = function()
+{
+	this.x = 180;
+	this.y = 200;
+};
+
+camera.prototype.draw = function()
+{
+	image(knight, this.x, this.y, 20, 20);
+};
+
+cam = new camera();
 
 var remapKey = function()
 {
@@ -85,6 +306,26 @@ var setName = function(x)
 	characters[rename].name += String.fromCharCode(x);
 }
 
+var setDefaultNamesIfNecessary = function()
+{
+	if(characters[0].name = "Click to name")
+	{
+		characters[0].name = "Knight";
+	}
+	if(characters[1].name = "Click to name")
+	{
+		characters[1].name = "Mage";
+	}
+	if(characters[2].name = "Click to name")
+	{
+		characters[2].name = "Rogue";
+	}
+	if(characters[3].name = "Click to name")
+	{
+		characters[3].name = "Monk";
+	}
+}
+
 var checkForKeyConflicts = function(x)
 {
 	for(var index = 0; index < keyMap.length; index++)
@@ -97,6 +338,18 @@ var checkForKeyConflicts = function(x)
 	return 0;
 };
 
+var validNameCharacter = function(x)
+{
+	if((x>47 && x <58) || x === 32 || (x>96 && x<123))
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 var keyPressed = function() 
 {
 	if(remapKey() === 1)
@@ -108,11 +361,11 @@ var keyPressed = function()
 	}
 	else if(rename !== -1)
 	{
-		if(key.code === 10)
+		if(key.code === keyMap[4])
 		{
 			rename = -1;
 		}
-		else
+		else if(validNameCharacter(key.code) === 1)
 		{
 			setName(key.code);
 		}
@@ -424,25 +677,19 @@ var updateSelect = function()
     {
         if(keyArray[keyMap[0]] === 1)
         {
-            if(keyPressDelay === 0)
+			if(startMenuSelect>0)
 			{
-				if(startMenuSelect>0)
-				{
-					startMenuSelect--;
-				}
-				keyPressDelay += 10;
+				startMenuSelect--;
 			}
+			keyArray[keyMap[0]] = 0;
         }
         else if(keyArray[keyMap[1]] === 1)
         {
-			if(keyPressDelay === 0)
+			if(startMenuSelect<2)
 			{
-				if(startMenuSelect<2)
-				{
-					startMenuSelect++;
-				}
-				keyPressDelay += 10;
+				startMenuSelect++;
 			}
+			keyArray[keyMap[1]] = 0;
         }
         else if(keyArray[keyMap[4]] === 1)
         {
@@ -571,9 +818,100 @@ var mouseClicked = function()
 				characters[3].name = "";
 				rename = 3;
 			}
+			else if(mouseX > 300 && mouseY > 370)
+			{
+				setDefaultNamesIfNecessary();
+				nameScreen = 0;
+				townScreen = 1;
+			}
 		}
 	}
+	else if(townScreen === 1)
+	{	
+	}
 };
+
+var updateFocus = function(map)
+{
+	if(keyArray[keyMap[0]] === 1)
+	{
+		if(cam.y === 0 && cam.x === 180 && wild1Screen === 1)
+		{
+			wild1Screen = 0;
+			townScreen = 1;
+			cam.y = 380;
+		}
+		else
+		{
+		if(cam.y > 0)
+		{
+		cam.y -= 20;
+		keyArray[keyMap[0]] = 0;
+		if(checkCollisions(cam.x/20, cam.y/20, map) === 1)
+		{
+			cam.y += 20;
+		}
+		}
+		}
+	}
+	else if(keyArray[keyMap[1]] === 1)
+	{
+		if(cam.y === 380 && cam.x === 180 && townScreen === 1)
+		{
+			townScreen = 0;
+			wild1Screen = 1;
+			cam.y = 0;
+		}
+		else
+		{
+		if(cam.y<380)
+		{
+		cam.y += 20;
+		keyArray[keyMap[1]] = 0;
+		if(checkCollisions(cam.x/20, cam.y/20, map) === 1)
+		{
+			cam.y -= 20;
+		}
+		}
+		}
+	}
+	else if(keyArray[keyMap[2]] === 1)
+	{
+		if(cam.x>0)
+		{
+		cam.x -= 20;
+		keyArray[keyMap[2]] = 0;
+		if(checkCollisions(cam.x/20, cam.y/20, map) === 1)
+		{
+			cam.x += 20;
+		}
+		}
+	}
+	else if(keyArray[keyMap[3]] === 1)
+	{
+		if(cam.x < 380)
+		{
+		cam.x += 20;
+		keyArray[keyMap[3]] = 0;
+		if(checkCollisions(cam.x/20, cam.y/20, map) === 1)
+		{
+			cam.x -= 20;
+		}
+		}
+	}
+	else if(keyArray[keyMap[5]] === 1)
+	{
+		if(townScreen === 1 || wild1Screen === 1)
+		{
+			townScreen = 0;
+			wild1Screen = 0;
+			inventoryScreen = 1;
+		}
+	}
+}
+
+initTilemap(townTilemap, town);
+initTilemap(wild1Tilemap, wild1);
 
 var drawScreen = function()
 {
@@ -746,15 +1084,35 @@ var drawScreen = function()
 		text(characters[1].name, 260, 185);
 		text(characters[2].name, 260, 255);
 		text(characters[3].name, 260, 325);
+		fill(255, 255, 255);
+		text("Continue->", 350, 380);
+		if(rename !== -1)
+		{
+			text("Press Select to finish", 200, 380);
+		}
     }
+	else if(townScreen === 1)
+	{
+		background(0, 0, 0);
+		drawTilemap(town);
+		cam.draw();
+		updateFocus(townTilemap);
+	}
+	else if(wild1Screen === 1)
+	{
+		background(0, 0, 0);
+		drawTilemap(wild1);
+		cam.draw();
+		updateFocus(wild1Tilemap);
+	}
+	else if(inventoryScreen === 1)
+	{
+		background(0, 0, 0);
+	}
 };
 
 draw = function() {
     drawScreen();
-	if(keyPressDelay > 0)
-	{
-		keyPressDelay--;
-	}
 };
 
 
