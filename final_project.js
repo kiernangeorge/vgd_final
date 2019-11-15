@@ -55,12 +55,16 @@ var sketchProc = function (processingInstance) {
 
         //player, used when moving out of battle
         var cam;
+		
+		var clickedOnNPC = 0;
 
         //character sprites
         monk = loadImage("sprites/characters/monk.png");
         mage = loadImage("sprites/characters/mage.png");
         knight = loadImage("sprites/characters/knight.png");
         rogue = loadImage("sprites/characters/rogue.png");
+        big_orc = loadImage("sprites/characters/big_orc.png");
+        orc = loadImage("sprites/characters/orc.png");
 
         //tile sprites
         short_grass = loadImage("sprites/tiles/short_grass.png");
@@ -76,8 +80,20 @@ var sketchProc = function (processingInstance) {
         fence_top = loadImage("sprites/tiles/fence_top.png");
         weapon_shop = loadImage("sprites/tiles/weapon_shop.png");
         item_shop = loadImage("sprites/tiles/item_shop.png");
-		coin = loadImage("sprites/items/coin.png");
-		armor = loadImage("sprites/tiles/armor.png");
+        coin = loadImage("sprites/items/coin.png");
+        armor = loadImage("sprites/tiles/armor.png");
+        bridge = loadImage("sprites/tiles/bridge.png");
+        tree = loadImage("sprites/tiles/tree.png");
+
+        //sounds
+        spell = new Audio("sounds/spell.wav");
+        sword = new Audio("sounds/sword.wav");
+        punch = new Audio("sounds/punch.wav");
+        knife = new Audio("sounds/knife1.wav");
+        small_orc = new Audio("sounds/small_orc.wav");
+        large_orc = new Audio("sounds/big_orc.wav");
+		select_sound = new Audio("sounds/select.wav");
+		door_sound = new Audio("sounds/door.wav");
 
         //town tilemap array
         var town = [];
@@ -118,11 +134,17 @@ var sketchProc = function (processingInstance) {
             } else if (this.type === "item_shop") {
                 image(house_wall, this.x, this.y, 20, 20);
                 image(item_shop, this.x, this.y, 20, 22);
+            } else if (this.type === "bridge") {
+                image(bridge, this.x, this.y, 20, 20);
+            } else if (this.type === "tree") {
+                image(tree, this.x, this.y, 20, 20);
+            } else if (this.type === "tall_grass") {
+                image(tall_grass, this.x, this.y, 20, 20);
             }
         };
 
         //w = wall, s = short grass, t = tall grass, f = flower, d = door, b = water, h = house wall
-        //y = house floor, p = path, z = fence side, x = fence top
+        //y = house floor, p = path, z = fence side, x = fence top, n = bridge, m = tree
         var townTilemap = [
             "wwwwwwwwwwwwwwwwwwww",
             "wssssssssssssssssssw",
@@ -147,25 +169,25 @@ var sketchProc = function (processingInstance) {
 
         var wild1Tilemap = [
             "wwwwwwwwwpwwwwwwwwww",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss",
-            "ssssssssssssssssssss"];
+            "xffffxssspsssssssssw",
+            "xffffxsssppppppppppp",
+            "xzszzxssspsssssssssw",
+            "ssppppppppsssssssssw",
+            "ssssssssspsssssssssw",
+            "sssstsssspsssssssmsm",
+            "ssssssssspsssssssbbb",
+            "stsssssssppppppssbtt",
+            "sssssfbbbssssspssbss",
+            "sstsssbbbbbbbbnbbbss",
+            "sssssfbbbssssmpmssss",
+            "sssssssssssssmpmssss",
+            "stsssssssssssmpmssss",
+            "sssssssssssssspsssss",
+            "ssssmsmsmsmsmspsmsms",
+            "sssspppppppppppppppp",
+            "mffsmsmsmsmsmsssmsms",
+            "bbfssssssssssstsssss",
+            "bbfssssssttsssstssss"];
 
         var initTilemap = function (tilemap, tiles) {
             for (var row = 0; row < tilemap.length; row++) {
@@ -204,6 +226,16 @@ var sketchProc = function (processingInstance) {
                     case 'c':
                         tiles.push(new floor(col * 20, row * 20, "item_shop"));
                         break;
+                    case 'n':
+                        tiles.push(new floor(col * 20, row * 20, "bridge"));
+                        break;
+                    case 'm':
+                        tiles.push(new floor(col * 20, row * 20, "short_grass"));
+                        tiles.push(new floor(col * 20, row * 20, "tree"));
+                        break;
+                    case 't':
+                        tiles.push(new floor(col * 20, row * 20, "tall_grass"));
+                        break;
                     default:
                         break;
                     }
@@ -212,7 +244,7 @@ var sketchProc = function (processingInstance) {
         };
 
         var checkCollisions = function (row, col, tilemap) {
-            if (tilemap[col][row] === 'w' || tilemap[col][row] === 'b' || tilemap[col][row] === 'h' || tilemap[col][row] === 'z' || tilemap[col][row] === 'x') {
+            if (tilemap[col][row] === 'w' || tilemap[col][row] === 'b' || tilemap[col][row] === 'h' || tilemap[col][row] === 'z' || tilemap[col][row] === 'x' || tilemap[col][row] === 'm') {
                 return 1;
             }
             return 0;
@@ -228,9 +260,9 @@ var sketchProc = function (processingInstance) {
             this.name = "Click to name";
             this.health = health;
             this.mana = mana;
-			this.coin = 50;
-			this.weapon = weapon;
-			this.armor = armor;
+            this.coin = 50;
+            this.weapon = weapon;
+            this.armor = armor;
         }
 
         characters.push(new character(100, -1, "Rusty Sword", "Tarnished Mail")); //knight
@@ -403,174 +435,6 @@ var sketchProc = function (processingInstance) {
             text("Kiernan George", 200, 180);
         };
 
-        var drawMage = function () {
-            noStroke();
-            fill(255, 219, 172);
-            ellipse(40, 320, 30, 30);
-            fill(0, 0, 0);
-            ellipse(35, 315, 5, 5);
-            ellipse(45, 315, 5, 5);
-            arc(40, 325, 10, 10, 0, PI);
-            fill(0, 0, 128);
-            quad(33, 335, 47, 335, 55, 355, 25, 355);
-            ellipse(40, 305, 40, 10);
-            arc(40, 305, 15, 30, PI, 2 * PI);
-            ellipse(40, 350, 16, 30);
-            fill(255, 219, 172);
-            ellipse(30, 345, 10, 10);
-            ellipse(50, 345, 10, 10);
-            fill(139, 69, 19);
-            quad(50, 370, 55, 370, 55, 335, 50, 335);
-            fill(255, 0, 0);
-            rect(50, 325, 5, 10);
-            fill(255, 255, 255);
-            ellipse(35, 315, 2, 2);
-            ellipse(45, 315, 2, 2);
-        };
-
-        var drawWarrior = function () {
-            noStroke();
-            fill(241, 194, 125);
-            ellipse(160, 320, 30, 30);
-            fill(255, 255, 255);
-            ellipse(155, 315, 5, 5);
-            ellipse(165, 315, 5, 5);
-            arc(160, 325, 10, 10, 0, PI);
-            fill(255, 0, 0);
-            ellipse(155, 315, 2, 2);
-            ellipse(165, 315, 2, 2);
-            fill(141, 85, 36);
-            ellipse(160, 350, 16, 30);
-            fill(241, 194, 125);
-            ellipse(150, 345, 10, 10);
-            ellipse(170, 345, 10, 10);
-            fill(255, 215, 0);
-            ellipse(160, 340, 3, 3);
-            ellipse(160, 345, 3, 3);
-            ellipse(160, 350, 3, 3);
-            fill(141, 85, 36);
-            quad(175, 337, 178, 340, 177, 359, 174, 356);
-            quad(171, 334, 185, 339, 183, 342, 170, 338);
-            fill(128, 128, 128);
-            ellipse(175, 356, 5, 5);
-            quad(179, 315, 183, 316, 180, 337, 176, 337);
-            triangle(179, 315, 183, 316, 182, 310);
-            stroke(105, 105, 105);
-            strokeWeight(2);
-            line(182, 311, 178, 337);
-            noStroke();
-        };
-
-        var drawRogue = function () {
-            noStroke();
-            fill(0, 0, 0);
-            ellipse(80, 320, 30, 30);
-            ellipse(80, 350, 16, 30);
-            fill(255, 255, 255);
-            ellipse(75, 315, 5, 5);
-            ellipse(85, 315, 5, 5);
-            arc(80, 325, 10, 10, 0, PI);
-            fill(0, 0, 0);
-            ellipse(75, 315, 2, 2);
-            ellipse(85, 315, 2, 2);
-            fill(224, 172, 105);
-            ellipse(70, 345, 10, 10);
-            ellipse(90, 345, 10, 10);
-            fill(192, 192, 192);
-            rect(73, 353, 13, 3);
-            fill(139, 69, 19);
-            rect(77, 353, 5, 3);
-
-        };
-
-        var drawMonk = function () {
-            fill(198, 134, 66);
-            ellipse(120, 320, 30, 30);
-            ellipse(120, 350, 16, 30);
-            ellipse(110, 345, 10, 10);
-            ellipse(130, 345, 10, 10);
-            fill(255, 255, 255);
-            ellipse(115, 315, 5, 5);
-            ellipse(125, 315, 5, 5);
-            fill(0, 0, 0);
-            ellipse(115, 315, 2, 2);
-            ellipse(125, 315, 2, 2);
-            arc(120, 325, 10, 3, PI, 2 * PI);
-            strokeWeight(1);
-            stroke(0, 0, 0);
-            line(120, 345, 120, 355);
-            line(117, 347, 123, 347);
-            line(117, 350, 123, 350);
-            line(117, 353, 123, 353);
-            noStroke();
-            fill(141, 85, 36);
-            arc(120, 355, 16, 20, 0, PI);
-            fill(255, 0, 0);
-            rect(110, 307, 20, 3);
-
-        };
-
-        var drawGoblins = function () {
-            fill(220, 20, 60);
-            ellipse(280, 320, 30, 30);
-            stroke(0, 0, 0);
-            triangle(280, 318, 275, 323, 280, 323);
-            strokeWeight(1);
-            line(273, 310, 278, 310);
-            line(282, 310, 287, 310);
-            noStroke();
-            fill(0, 0, 0);
-            ellipse(275, 315, 5, 5);
-            ellipse(285, 315, 5, 5);
-            arc(280, 330, 10, 5, PI, 2 * PI);
-            fill(255, 0, 255);
-            ellipse(275, 315, 2, 2);
-            ellipse(285, 315, 2, 2);
-            fill(220, 20, 60);
-            ellipse(280, 350, 16, 30);
-            ellipse(290, 345, 10, 10);
-            ellipse(270, 345, 10, 10);
-            fill(108, 108, 108);
-            arc(270, 340, 10, 10, PI / 2, 3 * PI / 2);
-            arc(290, 340, 10, 10, 3 * PI / 2, 2 * PI);
-            fill(139, 69, 19);
-            rect(265, 340, 5, 10);
-            rect(290, 340, 5, 10);
-
-            fill(135, 206, 235);
-            ellipse(320, 320, 30, 30);
-            stroke(0, 0, 0);
-            triangle(320, 318, 315, 323, 320, 323);
-            strokeWeight(1);
-            line(313, 310, 318, 310);
-            line(322, 310, 327, 310);
-            noStroke();
-            fill(0, 0, 0);
-            ellipse(315, 315, 5, 5);
-            ellipse(325, 315, 5, 5);
-            arc(320, 330, 10, 5, PI, 2 * PI);
-            fill(255, 0, 255);
-            ellipse(315, 315, 2, 2);
-            ellipse(325, 315, 2, 2);
-            fill(135, 206, 235);
-            ellipse(320, 350, 16, 30);
-            ellipse(330, 345, 10, 10);
-            ellipse(310, 345, 10, 10);
-            fill(108, 108, 108);
-            arc(310, 340, 10, 10, PI / 2, 3 * PI / 2);
-            arc(330, 340, 10, 10, 3 * PI / 2, 2 * PI);
-            fill(139, 69, 19);
-            rect(305, 340, 5, 10);
-            rect(330, 340, 5, 10);
-        };
-
-        var drawCharacters = function () {
-            drawMage();
-            drawWarrior();
-            drawRogue();
-            drawMonk();
-        };
-
         var drawMenu = function () {
             fill(0, 0, 0);
             textFont(createFont("fantasy"), 15);
@@ -600,12 +464,24 @@ var sketchProc = function (processingInstance) {
                     keyArray[keyMap[1]] = 0;
                 } else if (keyArray[keyMap[4]] === 1) {
                     if (startMenuSelect === 0) {
+						if(sound === 1)
+						{
+						select_sound.play();
+						}
                         startScreen = 0;
                         nameScreen = 1;
                     } else if (startMenuSelect === 1) {
+						if(sound === 1)
+						{
+						select_sound.play();
+						}
                         startScreen = 0;
                         instructionsScreen = 1;
                     } else if (startMenuSelect === 2) {
+						if(sound === 1)
+						{
+						select_sound.play();
+						}
                         startScreen = 0;
                         optionsScreen = 1;
                     }
@@ -614,9 +490,38 @@ var sketchProc = function (processingInstance) {
         };
 
         var mouseClicked = function () {
-            if (optionsScreen === 1) {
+            if (startScreen === 1) {
+                if (sound === 1) {
+                    if (mouseX > 60 && mouseX < 100 && mouseY > 340 && mouseY < 390) {
+                        spell.play();
+						clickedOnNPC = 1;
+                    } else if (mouseX > 10 && mouseX < 50 && mouseY > 340 && mouseY < 390) {
+                        sword.play();
+						clickedOnNPC = 1;
+                    } else if (mouseX > 158 && mouseX < 198 && mouseY > 353 && mouseY < 393) {
+                        punch.play();
+						clickedOnNPC = 1;
+                    } else if (mouseX > 110 && mouseX < 160 && mouseY > 340 && mouseY < 390) {
+                        sword.play();
+						clickedOnNPC = 1;
+                    } else if (mouseX > 250 && mouseX < 290 && mouseY > 350 && mouseY < 390) {
+                        small_orc.play();
+						clickedOnNPC = 1;
+                    } else if (mouseX > 290 && mouseX < 360 && mouseY > 320 && mouseY < 390) {
+                        large_orc.play();
+						clickedOnNPC = 1;
+                    } else if (mouseX > 350 && mouseX < 390 && mouseY > 350 && mouseY < 390) {
+                        small_orc.play();
+						clickedOnNPC = 1;
+                    }
+                }
+            } else if (optionsScreen === 1) {
                 if (remapKey() === 0) {
                     if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
+						if(sound === 1)
+						{
+						select_sound.play();
+						}
                         optionsScreen = 0;
                         startScreen = 1;
                     } else if (mouseX > 140 && mouseX < 240 && mouseY > 80 && mouseY < 130) {
@@ -654,6 +559,10 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (instructionsScreen === 1) {
                 if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
+					if(sound === 1)
+						{
+						select_sound.play();
+						}
                     instructionsScreen = 0;
                     startScreen = 1;
                 }
@@ -678,32 +587,40 @@ var sketchProc = function (processingInstance) {
                         characters[3].name = "";
                         rename = 3;
                     } else if (mouseX > 300 && mouseY > 370) {
+						if(sound === 1)
+						{
+						select_sound.play();
+						}
                         setDefaultNamesIfNecessary();
                         nameScreen = 0;
                         townScreen = 1;
                     }
                 }
-            } else if (inventoryScreen === 1) 
-			{
-				if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
+            } else if (inventoryScreen === 1) {
+                if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
+					if(sound === 1)
+						{
+						select_sound.play();
+						}
                     inventoryScreen = 0;
-                    if(returnFromInventory === 0)
-					{
-						townScreen = 1;
-						returnFromInventory = -1;
-					}
-					else if(returnFromInventory === 1)
-					{
-						wild1Screen = 1;
-						returnFromInventory = -1;
-					}
+                    if (returnFromInventory === 0) {
+                        townScreen = 1;
+                        returnFromInventory = -1;
+                    } else if (returnFromInventory === 1) {
+                        wild1Screen = 1;
+                        returnFromInventory = -1;
+                    }
                 }
-			}
+            }
         };
 
         var updateFocus = function (map) {
             if (keyArray[keyMap[0]] === 1) {
                 if (cam.y === 0 && cam.x === 180 && wild1Screen === 1) {
+					if(sound === 1)
+					{
+					door_sound.play();
+					}
                     wild1Screen = 0;
                     townScreen = 1;
                     cam.y = 380;
@@ -718,6 +635,10 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (keyArray[keyMap[1]] === 1) {
                 if (cam.y === 380 && cam.x === 180 && townScreen === 1) {
+					if(sound === 1)
+					{
+					door_sound.play();
+					}
                     townScreen = 0;
                     wild1Screen = 1;
                     cam.y = 0;
@@ -748,17 +669,24 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (keyArray[keyMap[5]] === 1) {
                 if (townScreen === 1) {
+					if(sound === 1)
+						{
+						select_sound.play();
+						}
                     townScreen = 0;
                     inventoryScreen = 1;
                     returnFromInventory = 0;
-				}
-                    else if (wild1Screen === 1) {
-                        wild1Screen = 0;
-                        inventoryScreen = 1;
-                        returnFromInventory = 1;
-                    }
+                } else if (wild1Screen === 1) {
+					if(sound === 1)
+						{
+						select_sound.play();
+						}
+                    wild1Screen = 0;
+                    inventoryScreen = 1;
+                    returnFromInventory = 1;
                 }
-            
+            }
+
         }
 
         initTilemap(townTilemap, town);
@@ -773,9 +701,19 @@ var sketchProc = function (processingInstance) {
                 drawRange(1200);
                 drawHills();
                 drawTitle();
-                drawCharacters();
-                drawGoblins();
                 drawMenu();
+				textSize(10);
+				if(clickedOnNPC === 0)
+				{
+				text("Click on the characters (sound on)", 200, 330);
+				}
+                image(knight, 10, 340, 40, 50);
+                image(mage, 60, 340, 40, 50);
+                image(rogue, 110, 340, 40, 50);
+                image(monk, 158, 353, 40, 40);
+                image(orc, 250, 350, 40, 40);
+                image(big_orc, 290, 320, 70, 70);
+                image(orc, 350, 350, 40, 40);
                 updateSelect();
                 updateDay();
             } else if (optionsScreen === 1) {
@@ -872,8 +810,8 @@ var sketchProc = function (processingInstance) {
                 text("Welcome to Clash of Prosecution, a turn-based", 10, 80);
                 text("RPG inspired by Final Fantasy 1. You will control", 10, 110);
                 text("a character while roaming in the semi-open world.", 10, 140);
-                text("While outside of the starting town, there is a", 10, 170);
-                text("random encounter system that will trigger combat.", 10, 200);
+                text("While outside of the starting town, there will be", 10, 170);
+                text("enemies that will trigger combat when touched.", 10, 200);
                 text("In combat you will control 4 characters, a mage, a", 10, 230);
                 text("knight, a monk, and a rogue. Default keys are WASD", 10, 260);
                 text("for movement, Enter for select, and I for inventory.", 10, 290);
@@ -963,26 +901,26 @@ var sketchProc = function (processingInstance) {
                 text("Mana:", 150, 265);
                 text("Health: " + characters[3].health + "/100", 150, 320);
                 text("Mana: " + characters[3].mana + "/30", 150, 340);
-				image(coin, 330, 0, 30, 30);
-				textSize(20);
-				text(characters[0].coin, 365, 25);
-				image(weapon_shop, 260, 95);
-				image(armor, 262, 115, 15, 20);
-				image(weapon_shop, 260, 165);
-				image(armor, 262, 185, 15, 20);
-				image(weapon_shop, 260, 235);
-				image(armor, 262, 255, 15, 20);
-				image(weapon_shop, 260, 310);
-				image(armor, 262, 330, 15, 20);
-				textSize(15);
-				text(characters[0].weapon, 290, 107);
-				text(characters[0].armor, 290, 132);
-				text(characters[1].weapon, 290, 177);
-				text(characters[1].armor, 290, 202);
-				text(characters[2].weapon, 290, 247);
-				text(characters[2].armor, 290, 272);
-				text(characters[3].weapon, 290, 322);
-				text(characters[3].armor, 290, 347);
+                image(coin, 330, 0, 30, 30);
+                textSize(20);
+                text(characters[0].coin, 365, 25);
+                image(weapon_shop, 260, 95);
+                image(armor, 262, 115, 15, 20);
+                image(weapon_shop, 260, 165);
+                image(armor, 262, 185, 15, 20);
+                image(weapon_shop, 260, 235);
+                image(armor, 262, 255, 15, 20);
+                image(weapon_shop, 260, 310);
+                image(armor, 262, 330, 15, 20);
+                textSize(15);
+                text(characters[0].weapon, 290, 107);
+                text(characters[0].armor, 290, 132);
+                text(characters[1].weapon, 290, 177);
+                text(characters[1].armor, 290, 202);
+                text(characters[2].weapon, 290, 247);
+                text(characters[2].armor, 290, 272);
+                text(characters[3].weapon, 290, 322);
+                text(characters[3].armor, 290, 347);
             }
         };
 
