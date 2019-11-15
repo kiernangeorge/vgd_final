@@ -30,6 +30,16 @@ var sketchProc = function (processingInstance) {
         var inventoryScreen = 0;
         var returnFromInventory = -1;
 
+        //animation globals for start screen npc's
+        var animateKnight = 0;
+        var animateMage = 0;
+        var animateRogue = 0;
+        var animateMonk = 0;
+		var knightY = 340;
+		var mageY = 340;
+		var rogueY = 340;
+		var monkY = 353;
+
         //globals to handle settings
         var sound = 1;
         var difficulty = 1;
@@ -55,8 +65,8 @@ var sketchProc = function (processingInstance) {
 
         //player, used when moving out of battle
         var cam;
-		
-		var clickedOnNPC = 0;
+
+        var clickedOnNPC = 0;
 
         //character sprites
         monk = loadImage("sprites/characters/monk.png");
@@ -92,8 +102,8 @@ var sketchProc = function (processingInstance) {
         knife = new Audio("sounds/knife1.wav");
         small_orc = new Audio("sounds/small_orc.wav");
         large_orc = new Audio("sounds/big_orc.wav");
-		select_sound = new Audio("sounds/select.wav");
-		door_sound = new Audio("sounds/door.wav");
+        select_sound = new Audio("sounds/select.wav");
+        door_sound = new Audio("sounds/door.wav");
 
         //town tilemap array
         var town = [];
@@ -464,24 +474,21 @@ var sketchProc = function (processingInstance) {
                     keyArray[keyMap[1]] = 0;
                 } else if (keyArray[keyMap[4]] === 1) {
                     if (startMenuSelect === 0) {
-						if(sound === 1)
-						{
-						select_sound.play();
-						}
+                        if (sound === 1) {
+                            select_sound.play();
+                        }
                         startScreen = 0;
                         nameScreen = 1;
                     } else if (startMenuSelect === 1) {
-						if(sound === 1)
-						{
-						select_sound.play();
-						}
+                        if (sound === 1) {
+                            select_sound.play();
+                        }
                         startScreen = 0;
                         instructionsScreen = 1;
                     } else if (startMenuSelect === 2) {
-						if(sound === 1)
-						{
-						select_sound.play();
-						}
+                        if (sound === 1) {
+                            select_sound.play();
+                        }
                         startScreen = 0;
                         optionsScreen = 1;
                     }
@@ -493,35 +500,46 @@ var sketchProc = function (processingInstance) {
             if (startScreen === 1) {
                 if (sound === 1) {
                     if (mouseX > 60 && mouseX < 100 && mouseY > 340 && mouseY < 390) {
-                        spell.play();
-						clickedOnNPC = 1;
+                        if (animateMage === 0) {
+                            animateMage = -1;
+                            spell.play();
+                            clickedOnNPC = 1;
+                        }
                     } else if (mouseX > 10 && mouseX < 50 && mouseY > 340 && mouseY < 390) {
-                        sword.play();
-						clickedOnNPC = 1;
+                        if (animateKnight === 0) {
+                            animateKnight = -1;
+                            sword.play();
+                            clickedOnNPC = 1;
+                        }
                     } else if (mouseX > 158 && mouseX < 198 && mouseY > 353 && mouseY < 393) {
-                        punch.play();
-						clickedOnNPC = 1;
+                        if (animateMonk === 0) {
+                            animateMonk = -1;
+                            punch.play();
+                            clickedOnNPC = 1;
+                        }
                     } else if (mouseX > 110 && mouseX < 160 && mouseY > 340 && mouseY < 390) {
-                        sword.play();
-						clickedOnNPC = 1;
+                        if (animateRogue === 0) {
+                            animateRogue = -1;
+                            sword.play();
+                            clickedOnNPC = 1;
+                        }
                     } else if (mouseX > 250 && mouseX < 290 && mouseY > 350 && mouseY < 390) {
                         small_orc.play();
-						clickedOnNPC = 1;
+                        clickedOnNPC = 1;
                     } else if (mouseX > 290 && mouseX < 360 && mouseY > 320 && mouseY < 390) {
                         large_orc.play();
-						clickedOnNPC = 1;
+                        clickedOnNPC = 1;
                     } else if (mouseX > 350 && mouseX < 390 && mouseY > 350 && mouseY < 390) {
                         small_orc.play();
-						clickedOnNPC = 1;
+                        clickedOnNPC = 1;
                     }
                 }
             } else if (optionsScreen === 1) {
                 if (remapKey() === 0) {
                     if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
-						if(sound === 1)
-						{
-						select_sound.play();
-						}
+                        if (sound === 1) {
+                            select_sound.play();
+                        }
                         optionsScreen = 0;
                         startScreen = 1;
                     } else if (mouseX > 140 && mouseX < 240 && mouseY > 80 && mouseY < 130) {
@@ -559,10 +577,9 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (instructionsScreen === 1) {
                 if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
-					if(sound === 1)
-						{
-						select_sound.play();
-						}
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
                     instructionsScreen = 0;
                     startScreen = 1;
                 }
@@ -587,10 +604,9 @@ var sketchProc = function (processingInstance) {
                         characters[3].name = "";
                         rename = 3;
                     } else if (mouseX > 300 && mouseY > 370) {
-						if(sound === 1)
-						{
-						select_sound.play();
-						}
+                        if (sound === 1) {
+                            select_sound.play();
+                        }
                         setDefaultNamesIfNecessary();
                         nameScreen = 0;
                         townScreen = 1;
@@ -598,10 +614,9 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (inventoryScreen === 1) {
                 if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
-					if(sound === 1)
-						{
-						select_sound.play();
-						}
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
                     inventoryScreen = 0;
                     if (returnFromInventory === 0) {
                         townScreen = 1;
@@ -617,10 +632,9 @@ var sketchProc = function (processingInstance) {
         var updateFocus = function (map) {
             if (keyArray[keyMap[0]] === 1) {
                 if (cam.y === 0 && cam.x === 180 && wild1Screen === 1) {
-					if(sound === 1)
-					{
-					door_sound.play();
-					}
+                    if (sound === 1) {
+                        door_sound.play();
+                    }
                     wild1Screen = 0;
                     townScreen = 1;
                     cam.y = 380;
@@ -635,10 +649,9 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (keyArray[keyMap[1]] === 1) {
                 if (cam.y === 380 && cam.x === 180 && townScreen === 1) {
-					if(sound === 1)
-					{
-					door_sound.play();
-					}
+                    if (sound === 1) {
+                        door_sound.play();
+                    }
                     townScreen = 0;
                     wild1Screen = 1;
                     cam.y = 0;
@@ -669,18 +682,16 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (keyArray[keyMap[5]] === 1) {
                 if (townScreen === 1) {
-					if(sound === 1)
-						{
-						select_sound.play();
-						}
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
                     townScreen = 0;
                     inventoryScreen = 1;
                     returnFromInventory = 0;
                 } else if (wild1Screen === 1) {
-					if(sound === 1)
-						{
-						select_sound.play();
-						}
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
                     wild1Screen = 0;
                     inventoryScreen = 1;
                     returnFromInventory = 1;
@@ -688,6 +699,58 @@ var sketchProc = function (processingInstance) {
             }
 
         }
+		
+		var animateTitleNPC = function()
+		{
+			if(animateKnight === 1 || animateKnight === -1)
+			{
+				knightY += animateKnight;
+				if(knightY === 280)
+				{
+					animateKnight = 1;
+				}
+				else if(knightY === 340)
+				{
+					animateKnight = 0;
+				}
+			}
+			if(animateMage === 1 || animateMage === -1)
+			{
+				mageY += animateMage;
+				if(mageY === 280)
+				{
+					animateMage = 1;
+				}
+				else if(mageY === 340)
+				{
+					animateMage = 0;
+				}
+			}
+			if(animateRogue === 1 || animateRogue === -1)
+			{
+				rogueY += animateRogue;
+				if(rogueY === 280)
+				{
+					animateRogue = 1;
+				}
+				else if(rogueY === 340)
+				{
+					animateRogue = 0;
+				}
+			}
+			if(animateMonk === 1 || animateMonk === -1)
+			{
+				monkY += animateMonk;
+				if(monkY === 293)
+				{
+					animateMonk = 1;
+				}
+				else if(monkY === 353)
+				{
+					animateMonk = 0;
+				}
+			}
+		};
 
         initTilemap(townTilemap, town);
         initTilemap(wild1Tilemap, wild1);
@@ -702,20 +765,20 @@ var sketchProc = function (processingInstance) {
                 drawHills();
                 drawTitle();
                 drawMenu();
-				textSize(10);
-				if(clickedOnNPC === 0)
-				{
-				text("Click on the characters (sound on)", 200, 330);
-				}
-                image(knight, 10, 340, 40, 50);
-                image(mage, 60, 340, 40, 50);
-                image(rogue, 110, 340, 40, 50);
-                image(monk, 158, 353, 40, 40);
+                textSize(10);
+                if (clickedOnNPC === 0) {
+                    text("Click on the characters (sound on)", 200, 330);
+                }
+                image(knight, 10, knightY, 40, 50);
+                image(mage, 60, mageY, 40, 50);
+                image(rogue, 110, rogueY, 40, 50);
+                image(monk, 158, monkY, 40, 40);
                 image(orc, 250, 350, 40, 40);
                 image(big_orc, 290, 320, 70, 70);
                 image(orc, 350, 350, 40, 40);
                 updateSelect();
                 updateDay();
+				animateTitleNPC();
             } else if (optionsScreen === 1) {
                 background(255, 255, 255);
                 fill(0, 0, 0);
