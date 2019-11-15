@@ -496,29 +496,40 @@ var sketchProc = function (processingInstance) {
 
         var mouseClicked = function () {
             if (startScreen === 1) {
-                if (sound === 1) {
                     if (mouseX > 60 && mouseX < 100 && mouseY > 340 && mouseY < 390) {
                         if (animateMage === 0) {
                             animateMage = -1;
+							if(sound === 1)
+							{
                             spell.play();
+							}
                             clickedOnNPC = 1;
                         }
                     } else if (mouseX > 10 && mouseX < 50 && mouseY > 340 && mouseY < 390) {
                         if (animateKnight === 0) {
                             animateKnight = -1;
+							if(sound === 1)
+							{
                             sword.play();
+							}
                             clickedOnNPC = 1;
                         }
                     } else if (mouseX > 158 && mouseX < 198 && mouseY > 353 && mouseY < 393) {
                         if (animateMonk === 0) {
                             animateMonk = -1;
+							if(sound === 1)
+							{
                             punch.play();
+							}
                             clickedOnNPC = 1;
                         }
                     } else if (mouseX > 110 && mouseX < 160 && mouseY > 340 && mouseY < 390) {
                         if (animateRogue === 0) {
                             animateRogue = -1;
+							if(sound === 1)
+							{
                             sword.play();
+							}
                             clickedOnNPC = 1;
                         }
                     } else if (mouseX > 250 && mouseX < 290 && mouseY > 350 && mouseY < 390) {
@@ -531,7 +542,6 @@ var sketchProc = function (processingInstance) {
                         small_orc.play();
                         clickedOnNPC = 1;
                     }
-                }
             } else if (optionsScreen === 1) {
                 if (remapKey() === 0) {
                     if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
