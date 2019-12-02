@@ -5,27 +5,29 @@ var sketchProc = function (processingInstance) {
 
         //Document for Final Project Milestone 2
         /*
-		I made substantial changes to the project for this milestone.
-		FSM: the basic idea is the same. There is a title screen, instructions, options, inventory screen, naming screen, and 2 environment screens. These are navigated with key presses and mouse clicks.
+        I made substantial changes to the project for this milestone.
+        FSM: the basic idea is the same. There is a title screen, instructions, options, inventory screen, naming screen, and 2 environment screens. These are navigated with key presses and mouse clicks.
         Key Mapping: this was pretty easy to implement. I have an array containing positions specified to hold interactive keys, like movement, inventory, and select. The user can change these in the options screen.
-		Options: The sound can be turned on/off which is represented by a global control variable. The difficulty is a global that will be used in combat for hit chance calculation and so forth, not implemented yet. The key mappings are the only other option.
-		Title Animation: A particle system was implemented with the map and noise function to create a realistic sky system, day-night cycle, mountains, and hills. The characters are sprites from a free rpg sprite sharing site, references above. The sounds are from the same.
-		Naming characters: The player is able to name characters in the first screen after starting the game. They can only enter alphanumeric characters. There are default names if they choose not to name them. These are implemented in an object oriented perspective.
-		Worlds: The player can navigate through 2 screens, a town, and a wild area. These tiles use the tilemap system shown in class. The letters represent a tile which is imported pixel art. The player moves with their mapped keys and collision detection is implemented.
-		Inventory: The inventory currently displays the 4 characters, their health and mana, their weapons and armor, and the amount of gold the player has accumulated.
-		Future Work: The only thing left will be to add a battle system when encountering an enemy in the wild zones. This should be simple as it's just a large fsm with minor calculations for damage/dodge chance. I will also implement some npc's with basic dialogue and a shop system. The player will also be able to keep and sell items so another inventory screen will be added to view and change equipped items.
-		*/
+        Options: The sound can be turned on/off which is represented by a global control variable. The difficulty is a global that will be used in combat for hit chance calculation and so forth, not implemented yet. The key mappings are the only other option.
+        Title Animation: A particle system was implemented with the map and noise function to create a realistic sky system, day-night cycle, mountains, and hills. The characters are sprites from a free rpg sprite sharing site, references above. The sounds are from the same.
+        Naming characters: The player is able to name characters in the first screen after starting the game. They can only enter alphanumeric characters. There are default names if they choose not to name them. These are implemented in an object oriented perspective.
+        Worlds: The player can navigate through 2 screens, a town, and a wild area. These tiles use the tilemap system shown in class. The letters represent a tile which is imported pixel art. The player moves with their mapped keys and collision detection is implemented.
+        Inventory: The inventory currently displays the 4 characters, their health and mana, their weapons and armor, and the amount of gold the player has accumulated.
+        Future Work: The only thing left will be to add a battle system when encountering an enemy in the wild zones. This should be simple as it's just a large fsm with minor calculations for damage/dodge chance. I will also implement some npc's with basic dialogue and a shop system. The player will also be able to keep and sell items so another inventory screen will be added to view and change equipped items.
+         */
         angleMode = "radians";
         //globals to handle screen display
-        var startScreen = 1;
+        var startScreen = 0;
         var optionsScreen = 0;
         var instructionsScreen = 0;
         var startMenuSelect = 0;
         var nameScreen = 0;
-        var townScreen = 0;
+        var townScreen = 1;
         var wild1Screen = 0;
         var battleScreen = 0;
         var inventoryScreen = 0;
+        var equipmentScreen = 0;
+        var itemScreen = 0;
         var returnFromInventory = -1;
 
         //animation globals for start screen npc's
@@ -33,10 +35,10 @@ var sketchProc = function (processingInstance) {
         var animateMage = 0;
         var animateRogue = 0;
         var animateMonk = 0;
-		var knightY = 340;
-		var mageY = 340;
-		var rogueY = 340;
-		var monkY = 353;
+        var knightY = 340;
+        var mageY = 340;
+        var rogueY = 340;
+        var monkY = 353;
 
         //globals to handle settings
         var sound = 1;
@@ -61,6 +63,22 @@ var sketchProc = function (processingInstance) {
         //array to hold the four characters
         var characters = [];
 
+        var enemies = [];
+
+        var wild1Enemies = [];
+		
+		var villagers = [];
+
+        var joints = [];
+
+        //array to hold equipment of group
+        var equipment = [];
+        //arrow for equipment selection
+        var equipmentIndex = 0;
+
+        var items = [];
+        var itemIndex = 0;
+
         //player, used when moving out of battle
         var cam;
 
@@ -73,6 +91,12 @@ var sketchProc = function (processingInstance) {
         rogue = loadImage("sprites/characters/rogue.png");
         big_orc = loadImage("sprites/characters/big_orc.png");
         orc = loadImage("sprites/characters/orc.png");
+		
+		//villager sprites
+		blacksmith = loadImage("sprites/village/blacksmith.png");
+		apothecary = loadImage("sprites/village/apothecary.png");
+		kid = loadImage("sprites/village/kid.png");
+		horse = loadImage("sprites/village/horse.png");
 
         //tile sprites
         short_grass = loadImage("sprites/tiles/short_grass.png");
@@ -113,6 +137,11 @@ var sketchProc = function (processingInstance) {
             this.x = x;
             this.y = y;
             this.type = type;
+        };
+
+        var jointObj = function (x, y) {
+            this.x = x;
+            this.y = y;
         };
 
         floor.prototype.draw = function () {
@@ -159,7 +188,7 @@ var sketchProc = function (processingInstance) {
             "wssssssssssxzzzzzzxw",
             "wssshhhhhhhxssssffxw",
             "wssshyyyyyhxsfssssxw",
-            "wssshyyyyyhxzzzszzxw",
+            "wssshyyyyyhxzzzzzzxw",
             "wssshhhyhchssssssssw",
             "wsssssspsssssssssssw",
             "wsssssspppsssssssssw",
@@ -169,8 +198,8 @@ var sketchProc = function (processingInstance) {
             "wsssssssspsswbbbwssw",
             "whhhhhssspsswbbbwssw",
             "whyyyhssspsswwwwwssw",
-            "whyyyhssspsssspfsssw",
-            "whyyyppppppppppssssw",
+            "whyyypppppsssspfsssw",
+            "whyyyhsssppppppssssw",
             "whhahhfsspfssssssssw",
             "wsssssssspsssssssssw",
             "wwwwwwwwwpwwwwwwwwww"];
@@ -196,6 +225,44 @@ var sketchProc = function (processingInstance) {
             "mffsmsmsmsmsmsssmsms",
             "bbfssssssssssstsssss",
             "bbfssssssttsssstssss"];
+			
+		var wild1Joints = [
+            "wwwwwwwwwpwwwwwwwwww",
+            "xffffxsssjsssssjsssw",
+            "xfjffxsssjppppppjppp",
+            "xzszzxsssjsssssssssw",
+            "ssjppppppjsssjsssssw",
+            "ssssssssspssssssjjsw",
+            "ssjstsjsspssjsssjmsm",
+            "ssssssssspsssssssbbb",
+            "stssjjsssjppppjssbtt",
+            "sssssfbbbssssspsjbss",
+            "sstsssbbbbbbbbnbbbss",
+            "sssssfbbbssssmpmssjs",
+            "ssssjjssssjssmpmssss",
+            "stsssssssssssmpmssss",
+            "ssjssssjssjsssjssssj",
+            "ssssmsmsmsmsmspsmsms",
+            "sssjpppjppppppjppppp",
+            "mffsmsmsmsmsmsjsmsmj",
+            "bbfsssssjsssssjsssss",
+            "bbfssssssttsssjtssss"];
+		
+		var initWild1Joints = function()
+		{
+			for (var row = 0; row < wild1Joints.length; row++) {
+                for (var col = 0; col < wild1Joints[row].length; col++) {
+                    switch (wild1Joints[row][col]) {
+                    case 'j':
+                        joints.push(new jointObj(col, row));
+                        break;
+					default:
+					break;
+					}
+				}
+			}
+		};
+		initWild1Joints();
 
         var initTilemap = function (tilemap, tiles) {
             for (var row = 0; row < tilemap.length; row++) {
@@ -244,6 +311,9 @@ var sketchProc = function (processingInstance) {
                     case 't':
                         tiles.push(new floor(col * 20, row * 20, "tall_grass"));
                         break;
+                    case 'j':
+                        dots.push(new dotObj(col, row));
+                        break;
                     default:
                         break;
                     }
@@ -252,9 +322,16 @@ var sketchProc = function (processingInstance) {
         };
 
         var checkCollisions = function (row, col, tilemap) {
-            if (tilemap[col][row] === 'w' || tilemap[col][row] === 'b' || tilemap[col][row] === 'h' || tilemap[col][row] === 'z' || tilemap[col][row] === 'x' || tilemap[col][row] === 'm') {
+            if (tilemap[col][row] === 'w' || tilemap[col][row] === 'b' || tilemap[col][row] === 'h' || tilemap[col][row] === 'z' || tilemap[col][row] === 'x' || tilemap[col][row] === 'm' || tilemap[col][row] === 'a' || tilemap[col][row] === 'c') {
                 return 1;
             }
+			for(var index = 0; index < villagers.length; index++)
+			{
+				if(cam.x/20 === villagers[index].x && cam.y/20 === villagers[index].y)
+				{
+					return 1;
+				}
+			}
             return 0;
         };
 
@@ -273,12 +350,91 @@ var sketchProc = function (processingInstance) {
             this.armor = armor;
         }
 
-        characters.push(new character(100, -1, "Rusty Sword", "Tarnished Mail")); //knight
-        characters.push(new character(100, 50, "Basic Staff", "Novice Robes")); //mage
-        characters.push(new character(100, -1, "Dagger", "Leather Armor")); //rogue
-        characters.push(new character(100, 30, "Fists", "Basic Gi")); //monk
+        var enemyNpc = function (type, x, y) {
+            this.type = type;
+            this.x = x;
+            this.y = y;
+            this.alive = 1;
+            this.speed = 1;
+			this.direction = 1;
+        };
 
-        var camera = function () {
+        enemyNpc.prototype.atJoint = function () {
+            var j = 0;
+            for (var i = 0; i < joints.length; i++) {
+                if ((this.x === joints[i].x) && (this.y === joints[i].y)) {
+                    j = 1;
+                }
+            }
+			
+
+            return j;
+        };
+		enemyNpc.prototype.collide = function(tilemap){
+			if(this.x > 19 || this.x<0 || this.y > 19 || this.y < 0)
+			{
+				return 1;
+			}
+			if (tilemap[this.y][this.x] === 'w' || tilemap[this.y][this.x] === 'b' || tilemap[this.y][this.x] === 'h' || tilemap[this.y][this.x] === 'z' || tilemap[this.y][this.x] === 'x' || tilemap[this.y][this.x] === 'm') {
+				
+				return 1;
+            }
+            return 0;
+		};
+
+        enemyNpc.prototype.move = function () {
+            if (frameCount % 30 === 0) {
+                if ((this.atJoint() === 1) && (random(0, 10) < 5)) {
+                    this.direction = Math.floor(random(1, 5));
+                }
+                switch (this.direction) {
+                case 1: //right
+                    this.x += this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.x -= this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                case 2: //left
+                    this.x -= this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.x += this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                case 3: //down
+                    this.y += this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.y -= this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                case 4: //up
+                    this.y -= this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.y += this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                }
+            }
+        };
+		
+		var moveWild1Enemies = function()
+		{
+			for(var index = 0; index < wild1Enemies.length; index++)
+			{
+				if(wild1Enemies[index].alive === 1)
+				{
+					wild1Enemies[index].move();
+				}
+			}
+		};
+
+        wild1Enemies.push(new enemyNpc("Orc", 2, 14));
+        wild1Enemies.push(new enemyNpc("Orc", 13, 6));
+		
+		var camera = function () {
             this.x = 180;
             this.y = 200;
         };
@@ -288,6 +444,132 @@ var sketchProc = function (processingInstance) {
         };
 
         cam = new camera();
+		
+		var villager = function(x, y, type)
+		{
+			this.x = x;
+			this.y = y;
+			this.type = type;
+			this.direction = Math.floor(random(1, 5));
+			this.speed = 1;
+			this.talking = 0;
+		};
+		
+		villager.prototype.collide = function()
+		{
+			if (townTilemap[this.y][this.x] === 'w' || townTilemap[this.y][this.x] === 'b' || townTilemap[this.y][this.x] === 'h' || townTilemap[this.y][this.x] === 'z' || townTilemap[this.y][this.x] === 'x' || townTilemap[this.y][this.x] === 'm' || townTilemap[this.y][this.x] === 'a' || townTilemap[this.y][this.x] === 'c') {
+				return 1;
+            }
+			if(cam.x/20 === this.x && cam.y/20 === this.y)
+			{
+				return 1;
+			}
+            return 0;
+		};
+		
+		villager.prototype.move = function()
+		{
+			if (frameCount % 60 === 0) {
+                switch (this.direction) {
+                case 1: //right
+                    this.x += this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.x -= this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                case 2: //left
+                    this.x -= this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.x += this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                case 3: //down
+                    this.y += this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.y -= this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                case 4: //up
+                    this.y -= this.speed;
+                    if (this.collide(wild1Tilemap) === 1) {
+                        this.y += this.speed;
+                        this.direction = Math.floor(random(1, 5));
+                    }
+                    break;
+                }
+            }
+		};
+		
+		villager.prototype.draw = function(){
+			if(this.type === "blacksmith")
+			{
+				
+				image(blacksmith, this.x*20, this.y*20, 20, 20);
+			}
+			else if(this.type === "apothecary")
+			{
+				image(apothecary, this.x*20, this.y*20, 20, 20);
+			}
+			else if(this.type === "kid")
+			{
+				image(kid, this.x*20, this.y*20, 20, 20);
+			}
+			else if(this.type === "horse")
+			{
+				image(horse, this.x*20, this.y*20-5, 30, 30);
+			}
+		};
+		
+		villagers.push(new villager(3, 16, "blacksmith"));
+		villagers.push(new villager(6, 5, "apothecary"));
+		villagers.push(new villager(14, 16, "kid"));
+		villagers.push(new villager(15, 3, "horse"));
+		
+		var drawVillagers = function()
+		{
+			for(var index = 0; index < villagers.length; index++)
+			{
+				villagers[index].draw();
+				if(villagers[index].talking === 0)
+				{
+				villagers[index].move();
+				}
+			}
+		};
+
+        var equipmentObj = function (name, classType, type, damage, equip) {
+            this.name = name;
+            this.classType = classType;
+            this.type = type;
+            this.damage = damage;
+            this.equip = equip;
+        };
+
+        var item = function (name, quantity, description) {
+            this.name = name;
+            this.quantity = quantity;
+            this.description = description;
+        };
+
+        items.push(new item("Health Potion", 4, "Restores 40 points of health."));
+        items.push(new item("Mana Potion", 2, "Restores 25 points of mana."));
+
+        equipment.push(new equipmentObj("Rusty Sword", "Knight", "Weapon", 10, "Knight"));
+        equipment.push(new equipmentObj("Chipped Mail", "Knight", "Armor", 10, "Knight"));
+        equipment.push(new equipmentObj("Basic Staff", "Mage", "Weapon", 8, "Mage"));
+        equipment.push(new equipmentObj("Novice Robes", "Mage", "Armor", 4, "Mage"));
+        equipment.push(new equipmentObj("Dagger", "Rogue", "Weapon", 6, "Rogue"));
+        equipment.push(new equipmentObj("Leather Armor", "Rogue", "Armor", 6, "Rogue"));
+        equipment.push(new equipmentObj("Fists", "Monk", "Weapon", 8, "Monk"));
+        equipment.push(new equipmentObj("Basic Gi", "Monk", "Armor", 12, "Monk"));
+
+        characters.push(new character(100, -1, "Rusty Sword", "Tarnished Mail")); //knight
+        characters.push(new character(100, 50, "Basic Staff", "Novice Robes")); //mage
+        characters.push(new character(100, -1, "Dagger", "Leather Armor")); //rogue
+        characters.push(new character(100, 30, "Fists", "Basic Gi")); //monk
 
         var remapKey = function () {
             for (var index = 0; index < keyMap.length; index++) {
@@ -496,52 +778,48 @@ var sketchProc = function (processingInstance) {
 
         var mouseClicked = function () {
             if (startScreen === 1) {
-                    if (mouseX > 60 && mouseX < 100 && mouseY > 340 && mouseY < 390) {
-                        if (animateMage === 0) {
-                            animateMage = -1;
-							if(sound === 1)
-							{
+                if (mouseX > 60 && mouseX < 100 && mouseY > 340 && mouseY < 390) {
+                    if (animateMage === 0) {
+                        animateMage = -1;
+                        if (sound === 1) {
                             spell.play();
-							}
-                            clickedOnNPC = 1;
                         }
-                    } else if (mouseX > 10 && mouseX < 50 && mouseY > 340 && mouseY < 390) {
-                        if (animateKnight === 0) {
-                            animateKnight = -1;
-							if(sound === 1)
-							{
-                            sword.play();
-							}
-                            clickedOnNPC = 1;
-                        }
-                    } else if (mouseX > 158 && mouseX < 198 && mouseY > 353 && mouseY < 393) {
-                        if (animateMonk === 0) {
-                            animateMonk = -1;
-							if(sound === 1)
-							{
-                            punch.play();
-							}
-                            clickedOnNPC = 1;
-                        }
-                    } else if (mouseX > 110 && mouseX < 160 && mouseY > 340 && mouseY < 390) {
-                        if (animateRogue === 0) {
-                            animateRogue = -1;
-							if(sound === 1)
-							{
-                            sword.play();
-							}
-                            clickedOnNPC = 1;
-                        }
-                    } else if (mouseX > 250 && mouseX < 290 && mouseY > 350 && mouseY < 390) {
-                        small_orc.play();
-                        clickedOnNPC = 1;
-                    } else if (mouseX > 290 && mouseX < 360 && mouseY > 320 && mouseY < 390) {
-                        large_orc.play();
-                        clickedOnNPC = 1;
-                    } else if (mouseX > 350 && mouseX < 390 && mouseY > 350 && mouseY < 390) {
-                        small_orc.play();
                         clickedOnNPC = 1;
                     }
+                } else if (mouseX > 10 && mouseX < 50 && mouseY > 340 && mouseY < 390) {
+                    if (animateKnight === 0) {
+                        animateKnight = -1;
+                        if (sound === 1) {
+                            sword.play();
+                        }
+                        clickedOnNPC = 1;
+                    }
+                } else if (mouseX > 158 && mouseX < 198 && mouseY > 353 && mouseY < 393) {
+                    if (animateMonk === 0) {
+                        animateMonk = -1;
+                        if (sound === 1) {
+                            punch.play();
+                        }
+                        clickedOnNPC = 1;
+                    }
+                } else if (mouseX > 110 && mouseX < 160 && mouseY > 340 && mouseY < 390) {
+                    if (animateRogue === 0) {
+                        animateRogue = -1;
+                        if (sound === 1) {
+                            sword.play();
+                        }
+                        clickedOnNPC = 1;
+                    }
+                } else if (mouseX > 250 && mouseX < 290 && mouseY > 350 && mouseY < 390) {
+                    small_orc.play();
+                    clickedOnNPC = 1;
+                } else if (mouseX > 290 && mouseX < 360 && mouseY > 320 && mouseY < 390) {
+                    large_orc.play();
+                    clickedOnNPC = 1;
+                } else if (mouseX > 350 && mouseX < 390 && mouseY > 350 && mouseY < 390) {
+                    small_orc.play();
+                    clickedOnNPC = 1;
+                }
             } else if (optionsScreen === 1) {
                 if (remapKey() === 0) {
                     if (mouseX > 0 && mouseX < 100 && mouseY > 0 && mouseY < 50) {
@@ -633,10 +911,37 @@ var sketchProc = function (processingInstance) {
                         wild1Screen = 1;
                         returnFromInventory = -1;
                     }
+                } else if (mouseX > 280 && mouseY > 360) {
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
+                    inventoryScreen = 0;
+                    equipmentScreen = 1;
+                } else if (mouseX < 100 && mouseY > 360) {
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
+                    inventoryScreen = 0;
+                    itemScreen = 1;
+                }
+            } else if (equipmentScreen === 1) {
+                if (mouseX < 100 && mouseY < 50) {
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
+                    inventoryScreen = 1;
+                    equipmentScreen = 0;
+                }
+            } else if (itemScreen === 1) {
+                if (mouseX < 100 && mouseY < 50) {
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
+                    inventoryScreen = 1;
+                    itemScreen = 0;
                 }
             }
         };
-
         var updateFocus = function (map) {
             if (keyArray[keyMap[0]] === 1) {
                 if (cam.y === 0 && cam.x === 180 && wild1Screen === 1) {
@@ -707,55 +1012,88 @@ var sketchProc = function (processingInstance) {
             }
 
         }
+
+        var animateTitleNPC = function () {
+            if (animateKnight === 1 || animateKnight === -1) {
+                knightY += animateKnight;
+                if (knightY === 280) {
+                    animateKnight = 1;
+                } else if (knightY === 340) {
+                    animateKnight = 0;
+                }
+            }
+            if (animateMage === 1 || animateMage === -1) {
+                mageY += animateMage;
+                if (mageY === 280) {
+                    animateMage = 1;
+                } else if (mageY === 340) {
+                    animateMage = 0;
+                }
+            }
+            if (animateRogue === 1 || animateRogue === -1) {
+                rogueY += animateRogue;
+                if (rogueY === 280) {
+                    animateRogue = 1;
+                } else if (rogueY === 340) {
+                    animateRogue = 0;
+                }
+            }
+            if (animateMonk === 1 || animateMonk === -1) {
+                monkY += animateMonk;
+                if (monkY === 293) {
+                    animateMonk = 1;
+                } else if (monkY === 353) {
+                    animateMonk = 0;
+                }
+            }
+        };
+
+        var updateCursor = function () {
+            if (equipmentScreen === 1) {
+                if (keyArray[keyMap[1]] === 1) {
+                    if (equipmentIndex < equipment.length - 1) {
+                        equipmentIndex++;
+                    }
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+                    if (equipmentIndex > 0) {
+                        equipmentIndex--;
+                    }
+                    keyArray[keyMap[0]] = 0;
+                }
+            } else if (itemScreen === 1) {
+                if (keyArray[keyMap[1]] === 1) {
+                    if (itemIndex < items.length - 1) {
+                        itemIndex++;
+                    }
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+                    if (itemIndex > 0) {
+                        itemIndex--;
+                    }
+                    keyArray[keyMap[0]] = 0;
+                }
+            }
+        };
+
+        var drawEnemyNpcs = function () {
+            for (var index = 0; index < wild1Enemies.length; index++) {
+                if (wild1Enemies[index].alive === 1) {
+                    image(orc, wild1Enemies[index].x * 20, wild1Enemies[index].y * 20, 20, 20);
+                }
+            }
+        };
 		
-		var animateTitleNPC = function()
+		var promptDialogue = function()
 		{
-			if(animateKnight === 1 || animateKnight === -1)
+			for(var index = 0; index < villagers.length; index++)
 			{
-				knightY += animateKnight;
-				if(knightY === 280)
+				if(dist(cam.x, cam.y, villagers[index].x*20, villagers[index].y*20)<40)
 				{
-					animateKnight = 1;
-				}
-				else if(knightY === 340)
-				{
-					animateKnight = 0;
-				}
-			}
-			if(animateMage === 1 || animateMage === -1)
-			{
-				mageY += animateMage;
-				if(mageY === 280)
-				{
-					animateMage = 1;
-				}
-				else if(mageY === 340)
-				{
-					animateMage = 0;
-				}
-			}
-			if(animateRogue === 1 || animateRogue === -1)
-			{
-				rogueY += animateRogue;
-				if(rogueY === 280)
-				{
-					animateRogue = 1;
-				}
-				else if(rogueY === 340)
-				{
-					animateRogue = 0;
-				}
-			}
-			if(animateMonk === 1 || animateMonk === -1)
-			{
-				monkY += animateMonk;
-				if(monkY === 293)
-				{
-					animateMonk = 1;
-				}
-				else if(monkY === 353)
-				{
-					animateMonk = 0;
+					fill(0);
+					textSize(15);
+					textAlign(CENTER, CENTER);
+					text("Press Select to talk", 200, 10);
 				}
 			}
 		};
@@ -786,7 +1124,7 @@ var sketchProc = function (processingInstance) {
                 image(orc, 350, 350, 40, 40);
                 updateSelect();
                 updateDay();
-				animateTitleNPC();
+                animateTitleNPC();
             } else if (optionsScreen === 1) {
                 background(255, 255, 255);
                 fill(0, 0, 0);
@@ -934,12 +1272,16 @@ var sketchProc = function (processingInstance) {
                 background(0, 0, 0);
                 drawTilemap(town);
                 cam.draw();
+				drawVillagers();
                 updateFocus(townTilemap);
+				promptDialogue();
             } else if (wild1Screen === 1) {
                 background(0, 0, 0);
                 drawTilemap(wild1);
                 cam.draw();
+                drawEnemyNpcs();
                 updateFocus(wild1Tilemap);
+				moveWild1Enemies();
             } else if (inventoryScreen === 1) {
                 background(0, 0, 0);
                 fill(108, 108, 108);
@@ -949,6 +1291,9 @@ var sketchProc = function (processingInstance) {
                 textAlign(CENTER, CENTER);
                 text("Back", 50, 25);
                 fill(255, 255, 255);
+                textSize(20);
+                text("Equipment->", 340, 380);
+                text("<-Items", 35, 380);
                 textAlign(LEFT, LEFT);
                 textSize(15);
                 text(characters[0].name, 0, 115, 20);
@@ -992,6 +1337,65 @@ var sketchProc = function (processingInstance) {
                 text(characters[2].armor, 290, 272);
                 text(characters[3].weapon, 290, 322);
                 text(characters[3].armor, 290, 347);
+            } else if (equipmentScreen === 1) {
+                background(0, 0, 0);
+                textFont(createFont("fantasy"), 30);
+                fill(108, 108, 108);
+                rect(0, 0, 100, 50, 30);
+                fill(0, 0, 0);
+                text("Back", 50, 25);
+                fill(255, 255, 255);
+                text("Equipment", 200, 20);
+                textSize(15);
+                textAlign(LEFT, LEFT);
+                text("Name", 30, 70);
+                text("Class", 120, 70);
+                text("Type", 195, 70);
+                text("Rating", 275, 70);
+                text("In Use", 345, 70);
+                stroke(255, 255, 255);
+                line(5, 80, 395, 80);
+                noStroke();
+                var height = 100;
+                for (var index = 0; index < equipment.length; index++) {
+                    text(equipment[index].name, 15, height);
+                    text(equipment[index].classType, 120, height);
+                    text(equipment[index].type, 190, height);
+                    text(equipment[index].damage, 285, height);
+                    text(equipment[index].equip, 345, height);
+                    height += 30;
+                }
+                fill(255, 255, 255);
+                triangle(2, 90 + (equipmentIndex * 30), 10, 95 + (equipmentIndex * 30), 2, 100 + (equipmentIndex * 30));
+                updateCursor();
+            } else if (itemScreen === 1) {
+                background(0, 0, 0);
+                background(0, 0, 0);
+                textFont(createFont("fantasy"), 30);
+                fill(108, 108, 108);
+                rect(0, 0, 100, 50, 30);
+                fill(0, 0, 0);
+                text("Back", 50, 25);
+                fill(255, 255, 255);
+                text("Items", 200, 20);
+                textSize(20);
+                textAlign(LEFT, LEFT);
+                text("Name", 20, 70);
+                text("Quantity", 100, 70);
+                text("Description", 235, 70);
+                stroke(255, 255, 255);
+                line(5, 80, 395, 80);
+                noStroke();
+                textSize(15);
+                var height = 100;
+                for (var index = 0; index < items.length; index++) {
+                    text(items[index].name, 10, height);
+                    text(items[index].quantity, 130, height);
+                    text(items[index].description, 200, height);
+                    height += 30;
+                }
+                triangle(2, 90 + (itemIndex * 30), 10, 95 + (itemIndex * 30), 2, 100 + (itemIndex * 30));
+                updateCursor();
             }
         };
 
