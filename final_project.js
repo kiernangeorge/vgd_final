@@ -28,8 +28,8 @@ var sketchProc = function (processingInstance) {
         var inventoryScreen = 0;
         var equipmentScreen = 0;
         var itemScreen = 0;
-		var equipmentShopScreen = 0;
-		var itemShopScreen = 1;
+        var equipmentShopScreen = 0;
+        var itemShopScreen = 1;
         var returnFromInventory = -1;
 
         //animation globals for start screen npc's
@@ -68,8 +68,8 @@ var sketchProc = function (processingInstance) {
         var enemies = [];
 
         var wild1Enemies = [];
-		
-		var villagers = [];
+
+        var villagers = [];
 
         var joints = [];
 
@@ -80,12 +80,15 @@ var sketchProc = function (processingInstance) {
 
         var items = [];
         var itemIndex = 0;
-		
-		var equipmentForSale = [];
-		var equipmentShopIndex = 0;
-		
-		var itemsForSale = [];
-		var itemShopIndex = 0;
+
+        var equipmentForSale = [];
+        var equipmentShopIndex = 0;
+
+        var itemsForSale = [];
+        var itemShopIndex = 0;
+
+        var buyYes = 0;
+        var buyNo = 0;
 
         //player, used when moving out of battle
         var cam;
@@ -99,12 +102,12 @@ var sketchProc = function (processingInstance) {
         rogue = loadImage("sprites/characters/rogue.png");
         big_orc = loadImage("sprites/characters/big_orc.png");
         orc = loadImage("sprites/characters/orc.png");
-		
-		//villager sprites
-		blacksmith = loadImage("sprites/village/blacksmith.png");
-		apothecary = loadImage("sprites/village/apothecary.png");
-		kid = loadImage("sprites/village/kid.png");
-		horse = loadImage("sprites/village/horse.png");
+
+        //villager sprites
+        blacksmith = loadImage("sprites/village/blacksmith.png");
+        apothecary = loadImage("sprites/village/apothecary.png");
+        kid = loadImage("sprites/village/kid.png");
+        horse = loadImage("sprites/village/horse.png");
 
         //tile sprites
         short_grass = loadImage("sprites/tiles/short_grass.png");
@@ -233,8 +236,8 @@ var sketchProc = function (processingInstance) {
             "mffsmsmsmsmsmsssmsms",
             "bbfssssssssssstsssss",
             "bbfssssssttsssstssss"];
-			
-		var wild1Joints = [
+
+        var wild1Joints = [
             "wwwwwwwwwpwwwwwwwwww",
             "xffffxsssjsssssjsssw",
             "xfjffxsssjppppppjppp",
@@ -255,22 +258,21 @@ var sketchProc = function (processingInstance) {
             "mffsmsmsmsmsmsjsmsmj",
             "bbfsssssjsssssjsssss",
             "bbfssssssttsssjtssss"];
-		
-		var initWild1Joints = function()
-		{
-			for (var row = 0; row < wild1Joints.length; row++) {
+
+        var initWild1Joints = function () {
+            for (var row = 0; row < wild1Joints.length; row++) {
                 for (var col = 0; col < wild1Joints[row].length; col++) {
                     switch (wild1Joints[row][col]) {
                     case 'j':
                         joints.push(new jointObj(col, row));
                         break;
-					default:
-					break;
-					}
-				}
-			}
-		};
-		initWild1Joints();
+                    default:
+                        break;
+                    }
+                }
+            }
+        };
+        initWild1Joints();
 
         var initTilemap = function (tilemap, tiles) {
             for (var row = 0; row < tilemap.length; row++) {
@@ -333,13 +335,11 @@ var sketchProc = function (processingInstance) {
             if (tilemap[col][row] === 'w' || tilemap[col][row] === 'b' || tilemap[col][row] === 'h' || tilemap[col][row] === 'z' || tilemap[col][row] === 'x' || tilemap[col][row] === 'm' || tilemap[col][row] === 'a' || tilemap[col][row] === 'c') {
                 return 1;
             }
-			for(var index = 0; index < villagers.length; index++)
-			{
-				if(cam.x/20 === villagers[index].x && cam.y/20 === villagers[index].y)
-				{
-					return 1;
-				}
-			}
+            for (var index = 0; index < villagers.length; index++) {
+                if (cam.x / 20 === villagers[index].x && cam.y / 20 === villagers[index].y) {
+                    return 1;
+                }
+            }
             return 0;
         };
 
@@ -364,7 +364,7 @@ var sketchProc = function (processingInstance) {
             this.y = y;
             this.alive = 1;
             this.speed = 1;
-			this.direction = 1;
+            this.direction = 1;
         };
 
         enemyNpc.prototype.atJoint = function () {
@@ -374,21 +374,19 @@ var sketchProc = function (processingInstance) {
                     j = 1;
                 }
             }
-			
 
             return j;
         };
-		enemyNpc.prototype.collide = function(tilemap){
-			if(this.x > 19 || this.x<0 || this.y > 19 || this.y < 0)
-			{
-				return 1;
-			}
-			if (tilemap[this.y][this.x] === 'w' || tilemap[this.y][this.x] === 'b' || tilemap[this.y][this.x] === 'h' || tilemap[this.y][this.x] === 'z' || tilemap[this.y][this.x] === 'x' || tilemap[this.y][this.x] === 'm') {
-				
-				return 1;
+        enemyNpc.prototype.collide = function (tilemap) {
+            if (this.x > 19 || this.x < 0 || this.y > 19 || this.y < 0) {
+                return 1;
+            }
+            if (tilemap[this.y][this.x] === 'w' || tilemap[this.y][this.x] === 'b' || tilemap[this.y][this.x] === 'h' || tilemap[this.y][this.x] === 'z' || tilemap[this.y][this.x] === 'x' || tilemap[this.y][this.x] === 'm') {
+
+                return 1;
             }
             return 0;
-		};
+        };
 
         enemyNpc.prototype.move = function () {
             if (frameCount % 30 === 0) {
@@ -427,26 +425,23 @@ var sketchProc = function (processingInstance) {
                 }
             }
         };
-		
-		var moveWild1Enemies = function()
-		{
-			for(var index = 0; index < wild1Enemies.length; index++)
-			{
-				if(wild1Enemies[index].alive === 1)
-				{
-					wild1Enemies[index].move();
-				}
-			}
-		};
+
+        var moveWild1Enemies = function () {
+            for (var index = 0; index < wild1Enemies.length; index++) {
+                if (wild1Enemies[index].alive === 1) {
+                    wild1Enemies[index].move();
+                }
+            }
+        };
 
         wild1Enemies.push(new enemyNpc("Orc", 2, 14));
         wild1Enemies.push(new enemyNpc("Orc", 13, 6));
-		
-		var camera = function () {
+
+        var camera = function () {
             this.x = 180;
             this.y = 200;
-			this.inRange = 0;
-			this.talking = -1;
+            this.inRange = 0;
+            this.talking = -1;
         };
 
         camera.prototype.draw = function () {
@@ -454,31 +449,27 @@ var sketchProc = function (processingInstance) {
         };
 
         cam = new camera();
-		
-		var villager = function(x, y, type)
-		{
-			this.x = x;
-			this.y = y;
-			this.type = type;
-			this.direction = Math.floor(random(1, 5));
-			this.speed = 1;
-		};
-		
-		villager.prototype.collide = function()
-		{
-			if (townTilemap[this.y][this.x] === 'w' || townTilemap[this.y][this.x] === 'b' || townTilemap[this.y][this.x] === 'h' || townTilemap[this.y][this.x] === 'z' || townTilemap[this.y][this.x] === 'x' || townTilemap[this.y][this.x] === 'm' || townTilemap[this.y][this.x] === 'a' || townTilemap[this.y][this.x] === 'c') {
-				return 1;
+
+        var villager = function (x, y, type) {
+            this.x = x;
+            this.y = y;
+            this.type = type;
+            this.direction = Math.floor(random(1, 5));
+            this.speed = 1;
+        };
+
+        villager.prototype.collide = function () {
+            if (townTilemap[this.y][this.x] === 'w' || townTilemap[this.y][this.x] === 'b' || townTilemap[this.y][this.x] === 'h' || townTilemap[this.y][this.x] === 'z' || townTilemap[this.y][this.x] === 'x' || townTilemap[this.y][this.x] === 'm' || townTilemap[this.y][this.x] === 'a' || townTilemap[this.y][this.x] === 'c') {
+                return 1;
             }
-			if(cam.x/20 === this.x && cam.y/20 === this.y)
-			{
-				return 1;
-			}
+            if (cam.x / 20 === this.x && cam.y / 20 === this.y) {
+                return 1;
+            }
             return 0;
-		};
-		
-		villager.prototype.move = function()
-		{
-			if (frameCount % 60 === 0) {
+        };
+
+        villager.prototype.move = function () {
+            if (frameCount % 60 === 0) {
                 switch (this.direction) {
                 case 1: //right
                     this.x += this.speed;
@@ -510,41 +501,32 @@ var sketchProc = function (processingInstance) {
                     break;
                 }
             }
-		};
-		
-		villager.prototype.draw = function(){
-			if(this.type === "blacksmith")
-			{
-				
-				image(blacksmith, this.x*20, this.y*20, 20, 20);
-			}
-			else if(this.type === "apothecary")
-			{
-				image(apothecary, this.x*20, this.y*20, 20, 20);
-			}
-			else if(this.type === "kid")
-			{
-				image(kid, this.x*20, this.y*20, 20, 20);
-			}
-			else if(this.type === "horse")
-			{
-				image(horse, this.x*20, this.y*20-5, 30, 30);
-			}
-		};
-		
-		villagers.push(new villager(3, 16, "blacksmith"));
-		villagers.push(new villager(6, 5, "apothecary"));
-		villagers.push(new villager(14, 16, "kid"));
-		villagers.push(new villager(15, 3, "horse"));
-		
-		var drawVillagers = function()
-		{
-			for(var index = 0; index < villagers.length; index++)
-			{
-				villagers[index].draw();
-				villagers[index].move();
-			}
-		};
+        };
+
+        villager.prototype.draw = function () {
+            if (this.type === "blacksmith") {
+
+                image(blacksmith, this.x * 20, this.y * 20, 20, 20);
+            } else if (this.type === "apothecary") {
+                image(apothecary, this.x * 20, this.y * 20, 20, 20);
+            } else if (this.type === "kid") {
+                image(kid, this.x * 20, this.y * 20, 20, 20);
+            } else if (this.type === "horse") {
+                image(horse, this.x * 20, this.y * 20 - 5, 30, 30);
+            }
+        };
+
+        villagers.push(new villager(3, 16, "blacksmith"));
+        villagers.push(new villager(6, 5, "apothecary"));
+        villagers.push(new villager(14, 16, "kid"));
+        villagers.push(new villager(15, 3, "horse"));
+
+        var drawVillagers = function () {
+            for (var index = 0; index < villagers.length; index++) {
+                villagers[index].draw();
+                villagers[index].move();
+            }
+        };
 
         var equipmentObj = function (name, classType, type, damage, equip) {
             this.name = name;
@@ -554,10 +536,11 @@ var sketchProc = function (processingInstance) {
             this.equip = equip;
         };
 
-        var item = function (name, quantity, description) {
+        var item = function (name, quantity, description, price) {
             this.name = name;
             this.quantity = quantity;
             this.description = description;
+            this.price = price || -1;
         };
 
         items.push(new item("Health Potion", 4, "Restores 40 points of health."));
@@ -576,10 +559,15 @@ var sketchProc = function (processingInstance) {
         characters.push(new character(100, 50, "Basic Staff", "Novice Robes")); //mage
         characters.push(new character(100, -1, "Dagger", "Leather Armor")); //rogue
         characters.push(new character(100, 30, "Fists", "Basic Gi")); //monk
-		
-		equipmentForSale.push(new equipmentObj("Lava Sword", "Knight", "Weapon", 17, 100));
-		equipmentForSale.push(new equipmentObj("Brass Knuckles", "Monk", "Weapon", 14, 40));
-		equipmentForSale.push(new equipmentObj("Master Robes", "Mage", "Armor", 16, 80));
+
+        equipmentForSale.push(new equipmentObj("Lava Sword", "Knight", "Weapon", 17, 100));
+        equipmentForSale.push(new equipmentObj("Brass Knuckles", "Monk", "Weapon", 14, 40));
+        equipmentForSale.push(new equipmentObj("Master Robes", "Mage", "Armor", 16, 80));
+
+        itemsForSale.push(new item("Health Potion", 6, "Restores 40 health", 7));
+        itemsForSale.push(new item("Mana Potion", 4, "Restores 25 mana", 4));
+        itemsForSale.push(new item("Feather of Phoenix", 2, "Revive a fallen member", 15));
+        itemsForSale.push(new item("Smoke Bomb", 4, "Escape from battle", 7));
 
         var remapKey = function () {
             for (var index = 0; index < keyMap.length; index++) {
@@ -950,21 +938,23 @@ var sketchProc = function (processingInstance) {
                     inventoryScreen = 1;
                     itemScreen = 0;
                 }
-            }
-			else if (equipmentShopScreen === 1) {
+            } else if (equipmentShopScreen === 1) {
                 if (mouseX < 100 && mouseY < 50) {
                     if (sound === 1) {
                         select_sound.play();
                     }
+                    buyYes = 0;
+                    buyNo = 0;
                     equipmentShopScreen = 0;
                     townScreen = 1;
                 }
-            }
-			else if (itemShopScreen === 1) {
+            } else if (itemShopScreen === 1) {
                 if (mouseX < 100 && mouseY < 50) {
                     if (sound === 1) {
                         select_sound.play();
                     }
+                    buyYes = 0;
+                    buyNo = 0;
                     itemShopScreen = 0;
                     townScreen = 1;
                 }
@@ -1021,22 +1011,16 @@ var sketchProc = function (processingInstance) {
                         cam.x -= 20;
                     }
                 }
-            }
-				else if(keyArray[keyMap[4]] === 1 && cam.inRange > 0)
-				{
-					if(cam.inRange === 1)
-					{
-						townScreen = 0;
-						equipmentShopScreen = 1;
-					}
-					else if(cam.inRange === 2)
-					{
-						townScreen = 0;
-						itemShopScreen = 1;
-					}
-					keyArray[keyMap[4]] = 0;
-				}
-			else if (keyArray[keyMap[5]] === 1) {
+            } else if (keyArray[keyMap[4]] === 1 && cam.inRange > 0) {
+                if (cam.inRange === 1) {
+                    townScreen = 0;
+                    equipmentShopScreen = 1;
+                } else if (cam.inRange === 2) {
+                    townScreen = 0;
+                    itemShopScreen = 1;
+                }
+                keyArray[keyMap[4]] = 0;
+            } else if (keyArray[keyMap[5]] === 1) {
                 if (townScreen === 1) {
                     if (sound === 1) {
                         select_sound.play();
@@ -1116,35 +1100,98 @@ var sketchProc = function (processingInstance) {
                     }
                     keyArray[keyMap[0]] = 0;
                 }
+            } else if (equipmentShopScreen === 1) {
+                if (keyArray[keyMap[1]] === 1) {
+                    if (buyNo === 1) {}
+                    else if (buyYes === 1) {
+                        buyYes = 0;
+                        buyNo = 1;
+                    } else {
+                        if (equipmentShopIndex < equipmentForSale.length - 1) {
+                            equipmentShopIndex++;
+                        }
+                    }
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+                    if (buyNo === 1) {
+                        buyYes = 1;
+                        buyNo = 0;
+                    } else if (buyYes === 1) {}
+                    else {
+                        if (equipmentShopIndex > 0) {
+                            equipmentShopIndex--;
+                        }
+                    }
+                    keyArray[keyMap[0]] = 0;
+                } else if (keyArray[keyMap[4]] === 1) {
+                    keyArray[keyMap[4]] = 0;
+                    if (buyNo === 1) {
+                        buyNo = 0;
+                    } else if (buyYes === 1) {
+                        if (equipmentForSale[equipmentShopIndex].equip < characters[0].coin) {
+                            var temp = equipmentForSale[equipmentShopIndex];
+                            characters[0].coin -= temp.equip;
+                            temp.equip = "";
+                            equipment.push(temp);
+                            equipmentForSale.splice(equipmentShopIndex, 1);
+                            buyYes = 0;
+                        }
+                    } else {
+                        buyYes = 1;
+                    }
+                }
+            } else if (itemShopScreen === 1) {
+                if (keyArray[keyMap[1]] === 1) {
+                    if (buyNo === 1) {}
+                    else if (buyYes === 1) {
+                        buyYes = 0;
+                        buyNo = 1;
+                    } else {
+                        if (itemShopIndex < itemsForSale.length - 1) {
+                            itemShopIndex++;
+                        }
+                    }
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+                    if (buyNo === 1) {
+                        buyYes = 1;
+                        buyNo = 0;
+                    } else if (buyYes === 1) {}
+                    else {
+                        if (itemShopIndex > 0) {
+                            itemShopIndex--;
+                        }
+                    }
+                    keyArray[keyMap[0]] = 0;
+                } else if (keyArray[keyMap[4]] === 1) {
+                    keyArray[keyMap[4]] = 0;
+                    if (buyNo === 1) {
+                        buyNo = 0;
+                    } else if (buyYes === 1) {
+                        if (itemsForSale[itemShopIndex].price < characters[0].coin) {
+                            var exists = 0;
+                            var temp = itemsForSale[itemShopIndex];
+                            for (var index = 0; index < items.length; index++) {
+                                if (items[index].name === temp.name) {
+                                    items[index].quantity++;
+                                    exists = 1;
+                                }
+                            }
+                            if (exists === 0) {
+                                items.push(temp);
+                            }
+                            itemsForSale[itemShopIndex].quantity--;
+                            characters[0].coin -= temp.price;
+                            if (itemsForSale[itemShopIndex].quantity === 0) {
+                                itemsForSale.splice(itemShopIndex, 1);
+                                buyYes = 0;
+                            }
+                        }
+                    } else {
+                        buyYes = 1;
+                    }
+                }
             }
-			else if(equipmentShopScreen === 1)
-			{
-				if (keyArray[keyMap[1]] === 1) {
-                    if (equipmentShopIndex < equipmentForSale.length - 1) {
-                        equipmentShopIndex++;
-                    }
-                    keyArray[keyMap[1]] = 0;
-                } else if (keyArray[keyMap[0]] === 1) {
-                    if (equipmentShopIndex > 0) {
-                        equipmentShopIndex--;
-                    }
-                    keyArray[keyMap[0]] = 0;
-                }
-			}
-			else if(itemShopScreen === 1)
-			{
-				if (keyArray[keyMap[1]] === 1) {
-                    if (itemShopIndex < itemsForSale.length - 1) {
-                        itemShopIndex++;
-                    }
-                    keyArray[keyMap[1]] = 0;
-                } else if (keyArray[keyMap[0]] === 1) {
-                    if (itemShopIndex > 0) {
-                        itemShopIndex--;
-                    }
-                    keyArray[keyMap[0]] = 0;
-                }
-			}
         };
 
         var drawEnemyNpcs = function () {
@@ -1154,37 +1201,29 @@ var sketchProc = function (processingInstance) {
                 }
             }
         };
-		
-		var promptDialogue = function()
-		{
-			textFont(createFont("fantasy"), 15);
-			for(var index = 0; index < villagers.length; index++)
-			{
-				if(dist(cam.x, cam.y, villagers[index].x*20, villagers[index].y*20)<40)
-				{
-					fill(0);
-					textSize(15);
-					textAlign(CENTER, CENTER);
-					if(index === 0)
-					{
-					text("Hey! Press Select to buy my weapons and armor.", 200, 30);
-					cam.inRange = 1;
-					}
-					else if(index === 1)
-					{
-						text("I can sell you some items if you press Select.", 200, 30);
-						cam.inRange = 2;
-					}
-					else if(index === 2)
-					{
-						text("Stranger Danger!!!", 200, 30);
-						cam.inRange = 0;
-					}
-					return;
-				}
-			}
-			cam.inRange = 0;
-		};
+
+        var promptDialogue = function () {
+            textFont(createFont("fantasy"), 15);
+            for (var index = 0; index < villagers.length; index++) {
+                if (dist(cam.x, cam.y, villagers[index].x * 20, villagers[index].y * 20) < 40) {
+                    fill(0);
+                    textSize(15);
+                    textAlign(CENTER, CENTER);
+                    if (index === 0) {
+                        text("Hey! Press Select to buy my weapons and armor.", 200, 30);
+                        cam.inRange = 1;
+                    } else if (index === 1) {
+                        text("I can sell you some items if you press Select.", 200, 30);
+                        cam.inRange = 2;
+                    } else if (index === 2) {
+                        text("Stranger Danger!!!", 200, 30);
+                        cam.inRange = 0;
+                    }
+                    return;
+                }
+            }
+            cam.inRange = 0;
+        };
 
         initTilemap(townTilemap, town);
         initTilemap(wild1Tilemap, wild1);
@@ -1360,16 +1399,16 @@ var sketchProc = function (processingInstance) {
                 background(0, 0, 0);
                 drawTilemap(town);
                 cam.draw();
-				drawVillagers();
+                drawVillagers();
                 updateFocus(townTilemap);
-				promptDialogue();
+                promptDialogue();
             } else if (wild1Screen === 1) {
                 background(0, 0, 0);
                 drawTilemap(wild1);
                 cam.draw();
                 drawEnemyNpcs();
                 updateFocus(wild1Tilemap);
-				moveWild1Enemies();
+                moveWild1Enemies();
             } else if (inventoryScreen === 1) {
                 background(0, 0, 0);
                 fill(108, 108, 108);
@@ -1483,21 +1522,19 @@ var sketchProc = function (processingInstance) {
                 }
                 triangle(2, 90 + (itemIndex * 30), 10, 95 + (itemIndex * 30), 2, 100 + (itemIndex * 30));
                 updateCursor();
-            }
-			else if(equipmentShopScreen === 1)
-			{
-				background(0);
-				textFont(createFont("fantasy"), 30);
+            } else if (equipmentShopScreen === 1) {
+                background(0);
+                textFont(createFont("fantasy"), 30);
                 fill(108, 108, 108);
                 rect(0, 0, 100, 50, 30);
                 fill(0, 0, 0);
                 text("Back", 50, 25);
                 fill(255, 255, 255);
                 text("Mr T's Smithery", 210, 25);
-				image(coin, 330, 5, 30, 30);
+                image(coin, 330, 5, 30, 30);
                 textSize(20);
                 text(characters[0].coin, 375, 25);
-				textSize(15);
+                textSize(15);
                 textAlign(LEFT, LEFT);
                 text("Name", 30, 70);
                 text("Class", 120, 70);
@@ -1518,19 +1555,61 @@ var sketchProc = function (processingInstance) {
                 }
                 triangle(2, 90 + (equipmentShopIndex * 30), 10, 95 + (equipmentShopIndex * 30), 2, 100 + (equipmentShopIndex * 30));
                 updateCursor();
-			}
-			else if(itemShopScreen === 1)
-			{
-				background(0);
-				textFont(createFont("fantasy"), 30);
+                if (buyYes === 1) {
+                    text("Buy: Yes", 200, 350);
+                    text("No", 230, 370);
+                    fill(255, 0, 0);
+                    triangle(190, 340, 198, 345, 190, 350);
+                } else if (buyNo === 1) {
+                    text("Buy: Yes", 200, 350);
+                    text("No", 230, 370);
+                    fill(255, 0, 0);
+                    triangle(190, 360, 198, 365, 190, 370);
+                }
+            } else if (itemShopScreen === 1) {
+                background(0);
+                textFont(createFont("fantasy"), 30);
                 fill(108, 108, 108);
                 rect(0, 0, 100, 50, 30);
                 fill(0, 0, 0);
                 text("Back", 50, 25);
                 fill(255, 255, 255);
-				textSize(25);
-                text("Granny Smith's Apothecary", 210, 25);
-			}
+                text("Granny Smith's", 220, 25);
+                text("Apothecary", 220, 55);
+                textSize(18);
+                textAlign(LEFT, LEFT);
+                image(coin, 330, 5, 30, 30);
+                text(characters[0].coin, 365, 30);
+                text("Name", 20, 90);
+                text("Quantity", 100, 90);
+                text("Price", 180, 90);
+                text("Description", 265, 90);
+                stroke(255, 255, 255);
+                line(5, 100, 395, 100);
+                noStroke();
+                textSize(15);
+                var height = 115;
+                for (var index = 0; index < itemsForSale.length; index++) {
+                    text(itemsForSale[index].name, 10, height);
+                    text(itemsForSale[index].quantity, 130, height);
+                    text(itemsForSale[index].price, 195, height);
+                    text(itemsForSale[index].description, 245, height);
+                    height += 30;
+                }
+                triangle(2, 105 + (itemShopIndex * 30), 10, 110 + (itemShopIndex * 30), 2, 115 + (itemShopIndex * 30));
+                updateCursor();
+                if (buyYes === 1) {
+                    text("Buy: Yes", 200, 350);
+                    text("No", 230, 370);
+                    fill(255, 0, 0);
+                    triangle(190, 340, 198, 345, 190, 350);
+                } else if (buyNo === 1) {
+                    text("Buy: Yes", 200, 350);
+                    text("No", 230, 370);
+                    fill(255, 0, 0);
+                    triangle(190, 360, 198, 365, 190, 370);
+                }
+            }
         };
 
         draw = function () {
