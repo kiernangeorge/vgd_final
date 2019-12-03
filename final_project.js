@@ -22,12 +22,14 @@ var sketchProc = function (processingInstance) {
         var instructionsScreen = 0;
         var startMenuSelect = 0;
         var nameScreen = 0;
-        var townScreen = 1;
+        var townScreen = 0;
         var wild1Screen = 0;
         var battleScreen = 0;
         var inventoryScreen = 0;
         var equipmentScreen = 0;
         var itemScreen = 0;
+		var equipmentShopScreen = 0;
+		var itemShopScreen = 1;
         var returnFromInventory = -1;
 
         //animation globals for start screen npc's
@@ -78,6 +80,12 @@ var sketchProc = function (processingInstance) {
 
         var items = [];
         var itemIndex = 0;
+		
+		var equipmentForSale = [];
+		var equipmentShopIndex = 0;
+		
+		var itemsForSale = [];
+		var itemShopIndex = 0;
 
         //player, used when moving out of battle
         var cam;
@@ -437,6 +445,8 @@ var sketchProc = function (processingInstance) {
 		var camera = function () {
             this.x = 180;
             this.y = 200;
+			this.inRange = 0;
+			this.talking = -1;
         };
 
         camera.prototype.draw = function () {
@@ -452,7 +462,6 @@ var sketchProc = function (processingInstance) {
 			this.type = type;
 			this.direction = Math.floor(random(1, 5));
 			this.speed = 1;
-			this.talking = 0;
 		};
 		
 		villager.prototype.collide = function()
@@ -533,10 +542,7 @@ var sketchProc = function (processingInstance) {
 			for(var index = 0; index < villagers.length; index++)
 			{
 				villagers[index].draw();
-				if(villagers[index].talking === 0)
-				{
 				villagers[index].move();
-				}
 			}
 		};
 
@@ -570,6 +576,10 @@ var sketchProc = function (processingInstance) {
         characters.push(new character(100, 50, "Basic Staff", "Novice Robes")); //mage
         characters.push(new character(100, -1, "Dagger", "Leather Armor")); //rogue
         characters.push(new character(100, 30, "Fists", "Basic Gi")); //monk
+		
+		equipmentForSale.push(new equipmentObj("Lava Sword", "Knight", "Weapon", 17, 100));
+		equipmentForSale.push(new equipmentObj("Brass Knuckles", "Monk", "Weapon", 14, 40));
+		equipmentForSale.push(new equipmentObj("Master Robes", "Mage", "Armor", 16, 80));
 
         var remapKey = function () {
             for (var index = 0; index < keyMap.length; index++) {
@@ -941,6 +951,24 @@ var sketchProc = function (processingInstance) {
                     itemScreen = 0;
                 }
             }
+			else if (equipmentShopScreen === 1) {
+                if (mouseX < 100 && mouseY < 50) {
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
+                    equipmentShopScreen = 0;
+                    townScreen = 1;
+                }
+            }
+			else if (itemShopScreen === 1) {
+                if (mouseX < 100 && mouseY < 50) {
+                    if (sound === 1) {
+                        select_sound.play();
+                    }
+                    itemShopScreen = 0;
+                    townScreen = 1;
+                }
+            }
         };
         var updateFocus = function (map) {
             if (keyArray[keyMap[0]] === 1) {
@@ -993,7 +1021,22 @@ var sketchProc = function (processingInstance) {
                         cam.x -= 20;
                     }
                 }
-            } else if (keyArray[keyMap[5]] === 1) {
+            }
+				else if(keyArray[keyMap[4]] === 1 && cam.inRange > 0)
+				{
+					if(cam.inRange === 1)
+					{
+						townScreen = 0;
+						equipmentShopScreen = 1;
+					}
+					else if(cam.inRange === 2)
+					{
+						townScreen = 0;
+						itemShopScreen = 1;
+					}
+					keyArray[keyMap[4]] = 0;
+				}
+			else if (keyArray[keyMap[5]] === 1) {
                 if (townScreen === 1) {
                     if (sound === 1) {
                         select_sound.play();
@@ -1074,6 +1117,34 @@ var sketchProc = function (processingInstance) {
                     keyArray[keyMap[0]] = 0;
                 }
             }
+			else if(equipmentShopScreen === 1)
+			{
+				if (keyArray[keyMap[1]] === 1) {
+                    if (equipmentShopIndex < equipmentForSale.length - 1) {
+                        equipmentShopIndex++;
+                    }
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+                    if (equipmentShopIndex > 0) {
+                        equipmentShopIndex--;
+                    }
+                    keyArray[keyMap[0]] = 0;
+                }
+			}
+			else if(itemShopScreen === 1)
+			{
+				if (keyArray[keyMap[1]] === 1) {
+                    if (itemShopIndex < itemsForSale.length - 1) {
+                        itemShopIndex++;
+                    }
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+                    if (itemShopIndex > 0) {
+                        itemShopIndex--;
+                    }
+                    keyArray[keyMap[0]] = 0;
+                }
+			}
         };
 
         var drawEnemyNpcs = function () {
@@ -1086,6 +1157,7 @@ var sketchProc = function (processingInstance) {
 		
 		var promptDialogue = function()
 		{
+			textFont(createFont("fantasy"), 15);
 			for(var index = 0; index < villagers.length; index++)
 			{
 				if(dist(cam.x, cam.y, villagers[index].x*20, villagers[index].y*20)<40)
@@ -1093,9 +1165,25 @@ var sketchProc = function (processingInstance) {
 					fill(0);
 					textSize(15);
 					textAlign(CENTER, CENTER);
-					text("Press Select to talk", 200, 10);
+					if(index === 0)
+					{
+					text("Hey! Press Select to buy my weapons and armor.", 200, 30);
+					cam.inRange = 1;
+					}
+					else if(index === 1)
+					{
+						text("I can sell you some items if you press Select.", 200, 30);
+						cam.inRange = 2;
+					}
+					else if(index === 2)
+					{
+						text("Stranger Danger!!!", 200, 30);
+						cam.inRange = 0;
+					}
+					return;
 				}
 			}
+			cam.inRange = 0;
 		};
 
         initTilemap(townTilemap, town);
@@ -1370,7 +1458,6 @@ var sketchProc = function (processingInstance) {
                 updateCursor();
             } else if (itemScreen === 1) {
                 background(0, 0, 0);
-                background(0, 0, 0);
                 textFont(createFont("fantasy"), 30);
                 fill(108, 108, 108);
                 rect(0, 0, 100, 50, 30);
@@ -1397,6 +1484,53 @@ var sketchProc = function (processingInstance) {
                 triangle(2, 90 + (itemIndex * 30), 10, 95 + (itemIndex * 30), 2, 100 + (itemIndex * 30));
                 updateCursor();
             }
+			else if(equipmentShopScreen === 1)
+			{
+				background(0);
+				textFont(createFont("fantasy"), 30);
+                fill(108, 108, 108);
+                rect(0, 0, 100, 50, 30);
+                fill(0, 0, 0);
+                text("Back", 50, 25);
+                fill(255, 255, 255);
+                text("Mr T's Smithery", 210, 25);
+				image(coin, 330, 5, 30, 30);
+                textSize(20);
+                text(characters[0].coin, 375, 25);
+				textSize(15);
+                textAlign(LEFT, LEFT);
+                text("Name", 30, 70);
+                text("Class", 120, 70);
+                text("Type", 195, 70);
+                text("Rating", 275, 70);
+                text("Price", 345, 70);
+                stroke(255, 255, 255);
+                line(5, 80, 395, 80);
+                noStroke();
+                var height = 100;
+                for (var index = 0; index < equipmentForSale.length; index++) {
+                    text(equipmentForSale[index].name, 15, height);
+                    text(equipmentForSale[index].classType, 120, height);
+                    text(equipmentForSale[index].type, 190, height);
+                    text(equipmentForSale[index].damage, 285, height);
+                    text(equipmentForSale[index].equip, 345, height);
+                    height += 30;
+                }
+                triangle(2, 90 + (equipmentShopIndex * 30), 10, 95 + (equipmentShopIndex * 30), 2, 100 + (equipmentShopIndex * 30));
+                updateCursor();
+			}
+			else if(itemShopScreen === 1)
+			{
+				background(0);
+				textFont(createFont("fantasy"), 30);
+                fill(108, 108, 108);
+                rect(0, 0, 100, 50, 30);
+                fill(0, 0, 0);
+                text("Back", 50, 25);
+                fill(255, 255, 255);
+				textSize(25);
+                text("Granny Smith's Apothecary", 210, 25);
+			}
         };
 
         draw = function () {
