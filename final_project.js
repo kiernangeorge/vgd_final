@@ -13,11 +13,10 @@ var sketchProc = function (processingInstance) {
         Naming characters: The player is able to name characters in the first screen after starting the game. They can only enter alphanumeric characters. There are default names if they choose not to name them. These are implemented in an object oriented perspective.
         Worlds: The player can navigate through 2 screens, a town, and a wild area. These tiles use the tilemap system shown in class. The letters represent a tile which is imported pixel art. The player moves with their mapped keys and collision detection is implemented.
         Inventory: The inventory currently displays the 4 characters, their health and mana, their weapons and armor, and the amount of gold the player has accumulated.
-        Future Work: The only thing left will be to add a battle system when encountering an enemy in the wild zones. This should be simple as it's just a large fsm with minor calculations for damage/dodge chance. I will also implement some npc's with basic dialogue and a shop system. The player will also be able to keep and sell items so another inventory screen will be added to view and change equipped items.
-         */
+        */
         angleMode = "radians";
         //globals to handle screen display
-        var startScreen = 0;
+        var startScreen = 1;
         var optionsScreen = 0;
         var instructionsScreen = 0;
         var startMenuSelect = 0;
@@ -29,7 +28,8 @@ var sketchProc = function (processingInstance) {
         var equipmentScreen = 0;
         var itemScreen = 0;
         var equipmentShopScreen = 0;
-        var itemShopScreen = 1;
+        var itemShopScreen = 0;
+        var battleScreen = 0;
         var returnFromInventory = -1;
 
         //animation globals for start screen npc's
@@ -89,6 +89,8 @@ var sketchProc = function (processingInstance) {
 
         var buyYes = 0;
         var buyNo = 0;
+
+        var equipIndex = -1;
 
         //player, used when moving out of battle
         var cam;
@@ -219,7 +221,7 @@ var sketchProc = function (processingInstance) {
             "wwwwwwwwwpwwwwwwwwww",
             "xffffxssspsssssssssw",
             "xffffxsssppppppppppp",
-            "xzszzxssspsssssssssw",
+            "xzzzzxssspsssssssssw",
             "ssppppppppsssssssssw",
             "ssssssssspsssssssssw",
             "sssstsssspsssssssmsm",
@@ -869,12 +871,6 @@ var sketchProc = function (processingInstance) {
                 }
             } else if (nameScreen === 1) {
                 if (rename === -1) {
-                    /*
-                    rect(160, 90, 200, 50, 30); //knight name
-                    rect(160, 160, 200, 50, 30); //mage
-                    rect(160, 230, 200, 50, 30); //rogue
-                    rect(160, 300, 200, 50, 30); //monk
-                     */
                     if (mouseX > 160 && mouseX < 360 && mouseY > 90 && mouseY < 140) {
                         characters[0].name = "";
                         rename = 0;
@@ -929,6 +925,7 @@ var sketchProc = function (processingInstance) {
                     }
                     inventoryScreen = 1;
                     equipmentScreen = 0;
+                    equipIndex = -1;
                 }
             } else if (itemScreen === 1) {
                 if (mouseX < 100 && mouseY < 50) {
@@ -960,6 +957,126 @@ var sketchProc = function (processingInstance) {
                 }
             }
         };
+
+        var battleEnemy = function (type, health) {
+            this.type = type;
+            this.health = health;
+        };
+
+        var battleEnemies = [];
+        var turns = [];
+        var battleOptionIndex = 0;
+        var turnIndex = 0;
+        var battleItemIndex = -1;
+        var attackIndex = -1;
+
+        var addBattleEnemies = function () {
+            battleEnemies = [];
+            turns.push(characters[0].name);
+            turns.push(characters[1].name);
+            turns.push(characters[2].name);
+            turns.push(characters[3].name);
+			battleOptionIndex = 0;
+            turnIndex = 0;
+			battleItemIndex = -1;
+			attackIndex = -1;
+            if (battleScreen == 1) {
+                battleEnemies.push(new battleEnemy("orc", 60));
+                battleEnemies.push(new battleEnemy("orc", 60));
+                turns.push("Orc 1");
+                turns.push("Orc 2");
+            }
+        };
+
+        var drawBattleCharacters = function () {
+            textFont(createFont("fantasy"), 11);
+            if (characters[0].health > 0) {
+                fill(255, 255, 255);
+                text("Health: " + characters[0].health + "/100", 140, 220);
+                image(knight, 175, 200, 30, 30);
+            }
+            if (characters[1].health > 0) {
+                text("Health: " + characters[1].health + "/100", 140, 250);
+                text("Mana: " + characters[1].mana + "/50", 135, 265);
+                image(mage, 175, 235, 30, 35);
+            }
+            if (characters[2].health > 0) {
+                text("Health: " + characters[2].health + "/100", 140, 290);
+                image(rogue, 175, 265, 30, 35);
+            }
+            if (characters[3].health > 0) {
+                text("Health: " + characters[3].health + "/100", 140, 315);
+                text("Mana: " + characters[1].mana + "/50", 140, 330);
+                image(monk, 175, 305, 30, 30);
+            }
+        };
+
+        var drawBattleOptions = function () {
+            textFont(createFont("fantasy"), 15);
+			fill(255, 255, 255);
+			text("Turn: " + turns[turnIndex], 40, 220);
+			if(turnIndex > 3)
+			{
+				if((turnIndex === 4 && battleEnemies[0].health > 0) ||(turnIndex === 5 && battleEnemies[1].health > 0))
+				{
+				attackIndex = -1;
+				battleItemIndex = -1;
+				fill(0);
+				text("Orc attacking!", 200, 200);
+				var attack = Math.floor(random(0, 4));
+				characters[attack].health -= 15;
+				}
+				turnIndex++;
+				if(turnIndex === 6)
+				{
+					turnIndex = 0;
+				}
+			}
+            if (attackIndex > -1) {
+				fill(255, 255, 255);
+				text("Back", 305, 340);
+				if(attackIndex === 0)
+				{
+					triangle(265, 240, 273, 245, 265, 250);
+				}				
+				else if(attackIndex === 1)
+				{
+					triangle(265, 290, 273, 295, 265, 300);
+				}
+				else if(attackIndex === 2)
+				{
+					triangle(265, 335, 273, 340, 265, 345);
+				}
+			}
+            else if (battleItemIndex > -1) {
+
+			}
+            else {
+				fill(255, 255, 255);
+                text("Attack", 60, 250);
+                text("Item", 60, 280);
+                text("Run", 60, 310);
+                if (battleOptionIndex == 0) {
+                    triangle(30, 245, 38, 250, 30, 255);
+                } else if (battleOptionIndex == 1) {
+                    triangle(30, 275, 38, 280, 30, 285);
+                } else if (battleOptionIndex == 2) {
+                    triangle(30, 305, 38, 310, 30, 315);
+                }
+            }
+        };
+
+        var drawBattleEnemies = function () {
+            height = 220
+                for (var index = 0; index < battleEnemies.length; index++) {
+                    if (battleEnemies[index].type == "orc") {
+                        image(orc, 280, height, 40, 40);
+                        text("Health: " + battleEnemies[index].health + "/60", 355, height + 25);
+                        height += 50;
+                    }
+                }
+        };
+
         var updateFocus = function (map) {
             if (keyArray[keyMap[0]] === 1) {
                 if (cam.y === 0 && cam.x === 180 && wild1Screen === 1) {
@@ -986,6 +1103,16 @@ var sketchProc = function (processingInstance) {
                     townScreen = 0;
                     wild1Screen = 1;
                     cam.y = 0;
+                    for (var index = 0; index < wild1Enemies; index++) {
+                        wild1Enemies[index].alive = 1;
+                    }
+                    wild1Enemies[0].x = 2;
+                    wild1Enemies[0].y = 14;
+                    wild1Enemies[1].x = 13;
+                    wild1Enemies[1].y = 6;
+					wild1Enemies[0].alive = 1;
+					wild1Enemies[1].alive = 1;
+
                 } else {
                     if (cam.y < 380) {
                         cam.y += 20;
@@ -1074,19 +1201,80 @@ var sketchProc = function (processingInstance) {
                 }
             }
         };
-
+		var inAFight = 0;
         var updateCursor = function () {
             if (equipmentScreen === 1) {
                 if (keyArray[keyMap[1]] === 1) {
-                    if (equipmentIndex < equipment.length - 1) {
-                        equipmentIndex++;
+                    if (equipIndex > -1) {
+                        equipIndex = 1;
+                    } else {
+                        if (equipmentIndex < equipment.length - 1) {
+                            equipmentIndex++;
+                        }
                     }
                     keyArray[keyMap[1]] = 0;
                 } else if (keyArray[keyMap[0]] === 1) {
-                    if (equipmentIndex > 0) {
-                        equipmentIndex--;
+                    if (equipIndex > -1) {
+                        equipIndex = 0;
+                    } else {
+                        if (equipmentIndex > 0) {
+                            equipmentIndex--;
+                        }
                     }
                     keyArray[keyMap[0]] = 0;
+                } else if (keyArray[keyMap[4]] === 1) {
+                    if (equipIndex === -1 && equipment[equipmentIndex].equip === "") {
+                        equipIndex = 0;
+                    } else if (equipIndex === 0) {
+                        var unequipItemName = "";
+                        var temp = equipment[equipmentIndex];
+                        if (temp.classType === "Knight") {
+                            temp.equip = "Knight";
+                            if (temp.type === "Weapon") {
+                                unequipItemName = characters[0].weapon;
+                                characters[0].weapon = temp.name;
+                            } else if (temp.type === "Armor") {
+                                unequipItemName = characters[0].armor;
+                                characters[0].armor = temp.name;
+                            }
+                        } else if (temp.classType === "Mage") {
+                            temp.equip = "Mage";
+                            if (temp.type === "Weapon") {
+                                unequipItemName = characters[1].weapon;
+                                characters[1].weapon = temp.name;
+                            } else if (temp.type === "Armor") {
+                                unequipItemName = characters[1].armor;
+                                characters[1].armor = temp.name;
+                            }
+                        } else if (temp.classType === "Rogue") {
+                            temp.equip = "Rogue";
+                            if (temp.type === "Weapon") {
+                                unequipItemName = characters[2].weapon;
+                                characters[2].weapon = temp.name;
+                            } else if (temp.type === "Armor") {
+                                unequipItemName = characters[2].armor;
+                                characters[2].armor = temp.name;
+                            }
+                        } else if (temp.classType === "Monk") {
+                            temp.equip = "Monk";
+                            if (temp.type === "Weapon") {
+                                unequipItemName = characters[3].weapon;
+                                characters[3].weapon = temp.name;
+                            } else if (temp.type === "Armor") {
+                                unequipItemName = characters[3].armor;
+                                characters[3].armor = temp.name;
+                            }
+                        }
+                        for (var index = 0; index < equipment.length; index++) {
+                            if (unequipItemName === equipment[index].name) {
+                                equipment[index].equip = "";
+                            }
+                        }
+                        equipIndex = -1;
+                    } else if (equipIndex === 1) {
+                        equipIndex = -1;
+                    }
+                    keyArray[keyMap[4]] = 0;
                 }
             } else if (itemScreen === 1) {
                 if (keyArray[keyMap[1]] === 1) {
@@ -1191,6 +1379,120 @@ var sketchProc = function (processingInstance) {
                         buyYes = 1;
                     }
                 }
+            } else if (battleScreen > 0) {
+                if (keyArray[keyMap[1]] === 1) {
+					if(attackIndex > -1)
+					{
+						if(attackIndex < 2)
+						{
+							if(battleEnemies.length === 1)
+							{
+								attackIndex += 2;
+							}
+							else
+							{
+								attackIndex++;
+							}
+						}
+					}
+					else if(battleItemIndex > -1)
+					{
+					}
+					else
+					{
+                    if (battleOptionIndex < 2) {
+                        battleOptionIndex++;
+                    }
+					}
+                    keyArray[keyMap[1]] = 0;
+                } else if (keyArray[keyMap[0]] === 1) {
+					if(attackIndex > -1)
+					{
+						if(attackIndex > 0)
+						{
+							if(battleEnemies.length === 1)
+							{
+								attackIndex -= 2;
+							}
+							else
+							{
+								attackIndex--;
+							}
+						}
+					}
+					else if(battleItemIndex > -1)
+					{
+					}
+					else
+					{
+                    if (battleOptionIndex > 0) {
+                        battleOptionIndex--;
+                    }
+					}
+                    keyArray[keyMap[0]] = 0;
+                } else if (keyArray[keyMap[4]] === 1) {
+					if(attackIndex > -1)
+					{
+						if(attackIndex === 2)
+						{
+							attackIndex = -1;
+						}
+						else
+						{
+							var damage = 0;
+							var weaponName = characters[turnIndex].weapon;
+							for(var index = 0; index < equipment.length; index++)
+							{
+								if(equipment[index].name == weaponName)
+								{
+									damage = equipment[index].damage;
+								}
+							}
+							battleEnemies[attackIndex].health -= damage;
+							if(battleEnemies[attackIndex].health < 0)
+							{
+								battleEnemies[attackIndex].health = 0;
+							}
+							if(battleEnemies[0].health === 0 && battleEnemies[1].health === 0)
+							{
+								if(battleScreen === 1)
+								{
+									characters[0].coin += 25;
+								}
+								if(inAFight === 0)
+								{
+									
+									wild1Enemies[0].alive = 0;
+								}
+								else
+								{
+									wild1Enemies[1].alive = 0;
+								}
+								battleScreen = 0;
+								wild1Screen += 1;
+							}
+							attackIndex = -1;
+							battleItemIndex = -1;
+							turnIndex++;
+						}
+					}
+					else
+					{
+                    if (battleOptionIndex === 2) {
+                        if (random(0, 11) > 5) {
+                            cam.x = 180;
+                            cam.y = 0;
+                            battleScreen = 0;
+                            wild1Screen = 1;
+                        }
+                        turnIndex++;
+                    }
+                     else if (battleOptionIndex === 0) {
+                        attackIndex = 0;
+                    }
+					}
+                    keyArray[keyMap[4]] = 0;
+                }
             }
         };
 
@@ -1223,6 +1525,18 @@ var sketchProc = function (processingInstance) {
                 }
             }
             cam.inRange = 0;
+        };
+
+        var startBattle = function () {
+            for (var check = 0; check < wild1Enemies.length; check++) {
+                if (wild1Enemies[check].x === cam.x / 20 && wild1Enemies[check].y === cam.y / 20 && wild1Enemies[check].alive === 1) {
+					wild1Screen = 0;
+					inAFight = check;
+                    battleScreen = 1;
+                    addBattleEnemies();
+					break;
+                }
+            }
         };
 
         initTilemap(townTilemap, town);
@@ -1409,6 +1723,7 @@ var sketchProc = function (processingInstance) {
                 drawEnemyNpcs();
                 updateFocus(wild1Tilemap);
                 moveWild1Enemies();
+                startBattle();
             } else if (inventoryScreen === 1) {
                 background(0, 0, 0);
                 fill(108, 108, 108);
@@ -1495,6 +1810,21 @@ var sketchProc = function (processingInstance) {
                 fill(255, 255, 255);
                 triangle(2, 90 + (equipmentIndex * 30), 10, 95 + (equipmentIndex * 30), 2, 100 + (equipmentIndex * 30));
                 updateCursor();
+                if (equipIndex > -1) {
+                    fill(255, 255, 255);
+                    rect(150, 150, 100, 100);
+                    fill(0);
+                    textSize(20);
+                    textAlign(CENTER, CENTER);
+                    text("Equip", 200, 170);
+                    text("Yes", 200, 200);
+                    text("No", 200, 230);
+                    if (equipIndex === 0) {
+                        triangle(170, 195, 178, 200, 170, 205);
+                    } else {
+                        triangle(170, 225, 178, 230, 170, 235);
+                    }
+                }
             } else if (itemScreen === 1) {
                 background(0, 0, 0);
                 textFont(createFont("fantasy"), 30);
@@ -1609,6 +1939,17 @@ var sketchProc = function (processingInstance) {
                     fill(255, 0, 0);
                     triangle(190, 360, 198, 365, 190, 370);
                 }
+            } else if (battleScreen > 0) {
+                background(0);
+                drawSky();
+				sunX = 300;
+                drawSun();
+                fill(0, 100, 0);
+                rect(0, 180, 400, 220);
+                drawBattleCharacters();
+                drawBattleEnemies();
+                drawBattleOptions();
+                updateCursor();
             }
         };
 
